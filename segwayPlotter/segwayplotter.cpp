@@ -53,7 +53,6 @@ segwayPlotter::segwayPlotter( QWidget *parent ) : QMainWindow( parent ), ui( new
 
     //Setup replot timer
     connect( &replot_timer, SIGNAL( timeout() ), this, SLOT( replot_timer_timeout() ) );
-    replot_timer.start( 200 );
 }
 
 /* Destructor
@@ -117,8 +116,10 @@ void segwayPlotter::on_buttStartPlot_clicked()
             ui->dspnMaxY->setEnabled( true );
             ui->dspnMinY->setEnabled( true );
             ui->spnNSamples->setEnabled( true );
+            ui->dspnUpdateHz->setEnabled( true );
             ui->wdgTrend->setInteractions( QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables );
             plotting = false;
+            replot_timer.stop();
     }
     else        //Turn ON plotting
     {
@@ -139,7 +140,9 @@ void segwayPlotter::on_buttStartPlot_clicked()
             ui->dspnMaxY->setEnabled( false );
             ui->dspnMinY->setEnabled( false );
             ui->spnNSamples->setEnabled( false );
+            ui->dspnUpdateHz->setEnabled( false );
             plotting = true;
+            replot_timer.start( (int)((1 / ui->dspnUpdateHz->value()) * 1000.0f) );
     }
 }
 
