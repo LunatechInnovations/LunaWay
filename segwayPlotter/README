@@ -1,0 +1,3 @@
+segwayPlotter
+
+Simple QT application for plotting values from the segway over a TCP socket
