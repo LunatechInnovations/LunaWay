@@ -2,12 +2,17 @@
 #include "ui_segwayplotter.h"
 #include <QTime>
 #include <QDebug>
+#include <QSettings>
+#include <QMessageBox>
 
 /* Constructor
  */
 segwayPlotter::segwayPlotter( QWidget *parent ) : QMainWindow( parent ), ui( new Ui::segwayPlotter )
 {
     ui->setupUi( this );
+
+    read_plot_settings();
+    read_com_settings();
 
     plotting = false;
     n_samples = 0.0f;
@@ -36,6 +41,7 @@ segwayPlotter::segwayPlotter( QWidget *parent ) : QMainWindow( parent ), ui( new
     ui->wdgTrend->xAxis->setScaleType( QCPAxis::stLinear );
     ui->wdgTrend->xAxis->setRange( 0.0f, 1.0f );
     ui->wdgTrend->xAxis->setLabel( "n Samples" );
+    ui->wdgTrend->xAxis->grid()->setVisible( false );
 
     ui->wdgTrend->yAxis->setScaleType( QCPAxis::stLinear );
     ui->wdgTrend->yAxis->setVisible( true );
@@ -43,6 +49,7 @@ segwayPlotter::segwayPlotter( QWidget *parent ) : QMainWindow( parent ), ui( new
     ui->wdgTrend->yAxis2->setScaleType( QCPAxis::stLinear );
     ui->wdgTrend->yAxis2->setVisible( true );
     ui->wdgTrend->yAxis2->setTickLabels( true );
+    ui->wdgTrend->yAxis->grid()->setVisible( true );
 
     ui->wdgTrend->setInteractions( 0 );
 
@@ -96,6 +103,8 @@ void segwayPlotter::on_buttStartServer_clicked()
     {
         if( ps.start( ui->spnPort->value() ) )
         {
+            write_com_settings();
+
             ui->txtSendCmd->setEnabled( true );
             ui->buttSend->setEnabled( true );
 
@@ -123,26 +132,28 @@ void segwayPlotter::on_buttStartPlot_clicked()
     }
     else        //Turn ON plotting
     {
-            n_samples = 0.0f;
-            ui->wdgTrend->xAxis->setRange( 0.0f, 1.0f );
+        write_plot_settings();
 
-            ui->wdgTrend->graph( 0 )->clearData();
-            ui->wdgTrend->graph( 1 )->clearData();
-            ui->wdgTrend->graph( 2 )->clearData();
+        n_samples = 0.0f;
+        ui->wdgTrend->xAxis->setRange( 0.0f, 1.0f );
 
-            ui->wdgTrend->yAxis->setRangeUpper( ui->dspnMaxY->value() );
-            ui->wdgTrend->yAxis2->setRangeUpper( ui->dspnMaxY->value() );
-            ui->wdgTrend->yAxis->setRangeLower( ui->dspnMinY->value() * -1.0f );
-            ui->wdgTrend->yAxis2->setRangeLower( ui->dspnMinY->value() * -1.0f );
-            ui->wdgTrend->setInteractions( 0 ); //Disable interactions while plotting
+        ui->wdgTrend->graph( 0 )->clearData();
+        ui->wdgTrend->graph( 1 )->clearData();
+        ui->wdgTrend->graph( 2 )->clearData();
 
-            ui->buttStartPlot->setText( "Stop Plot" );
-            ui->dspnMaxY->setEnabled( false );
-            ui->dspnMinY->setEnabled( false );
-            ui->spnNSamples->setEnabled( false );
-            ui->dspnUpdateHz->setEnabled( false );
-            plotting = true;
-            replot_timer.start( (int)((1 / ui->dspnUpdateHz->value()) * 1000.0f) );
+        ui->wdgTrend->yAxis->setRangeUpper( ui->dspnMaxY->value() );
+        ui->wdgTrend->yAxis2->setRangeUpper( ui->dspnMaxY->value() );
+        ui->wdgTrend->yAxis->setRangeLower( ui->dspnMinY->value() * -1.0f );
+        ui->wdgTrend->yAxis2->setRangeLower( ui->dspnMinY->value() * -1.0f );
+        ui->wdgTrend->setInteractions( 0 ); //Disable interactions while plotting
+
+        ui->buttStartPlot->setText( "Stop Plot" );
+        ui->dspnMaxY->setEnabled( false );
+        ui->dspnMinY->setEnabled( false );
+        ui->spnNSamples->setEnabled( false );
+        ui->dspnUpdateHz->setEnabled( false );
+        plotting = true;
+        replot_timer.start( (int)((1 / ui->dspnUpdateHz->value()) * 1000.0f) );
     }
 }
 
@@ -180,4 +191,54 @@ void segwayPlotter::on_buttSend_clicked()
 {
     if( ui->txtSendCmd->text().count() > 0 )
         ps.sendCommand( ui->txtSendCmd->text() );
+}
+
+void segwayPlotter::write_plot_settings()
+{
+    QSettings s;
+
+    s.setValue( "plot/maxY", ui->dspnMaxY->value() );
+    s.setValue( "plot/minY", ui->dspnMinY->value() );
+    s.setValue( "plot/updateHz", ui->dspnUpdateHz->value() );
+    s.setValue( "plot/nSamples", ui->spnNSamples->value() );
+}
+
+void segwayPlotter::read_plot_settings()
+{
+    QSettings s;
+    bool ok = false;
+
+    ui->dspnMaxY->setValue( s.value( "plot/maxY", 100.0f ).toDouble( &ok ) );
+    if( !ok )
+        QMessageBox::critical( NULL, "Error", "Failed to read MaxY from settings." );
+    ui->dspnMinY->setValue( s.value( "plot/minY", 100.0f ).toDouble( &ok ) );
+    if( !ok )
+        QMessageBox::critical( NULL, "Error", "Failed to read MinY from settings." );
+    ui->dspnUpdateHz->setValue( s.value( "plot/updateHz", 10.0f ).toDouble( &ok ) );
+    if( !ok )
+        QMessageBox::critical( NULL, "Error", "Failed to read UpdateHz from settings." );
+    ui->spnNSamples->setValue( s.value( "plot/nSamples", 300 ).toInt( &ok ) );
+    if( !ok )
+        QMessageBox::critical( NULL, "Error", "Failed to read nSamples from settings." );
+}
+
+void segwayPlotter::write_com_settings()
+{
+    QSettings s;
+
+    s.setValue( "com/port", ui->spnPort->value() );
+    s.setValue( "com/lastCmd", ui->txtSendCmd->text() );
+}
+
+
+void segwayPlotter::read_com_settings()
+{
+    QSettings s;
+    bool ok = false;
+
+    ui->spnPort->setValue( s.value( "com/port", 1234 ).toInt( &ok ) );
+    if( !ok )
+        QMessageBox::critical( NULL, "Error", "Failed to read port from settings." );
+
+    ui->txtSendCmd->setText( s.value( "com/lastCmd", "" ).toString() );
 }

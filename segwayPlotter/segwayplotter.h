@@ -22,6 +22,10 @@ private:
 	bool plotting;
     QTimer replot_timer;
     double n_samples;
+    void write_plot_settings();
+    void read_plot_settings();
+    void write_com_settings();
+    void read_com_settings();
 
 private slots:
     void logMessage( QString msg );
