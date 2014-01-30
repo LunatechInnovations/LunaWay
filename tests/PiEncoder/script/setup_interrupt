@@ -1,0 +1,9 @@
+#!/bin/bash
+
+left_encoder=11
+right_encoder=17
+
+echo $left_encoder > /sys/class/gpio/export
+echo $right_encoder > /sys/class/gpio/export
+echo rising > /sys/class/gpio/gpio$left_encoder/edge
+echo rising > /sys/class/gpio/gpio$right_encoder/edge

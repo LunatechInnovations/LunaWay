@@ -11,6 +11,7 @@
 #include <exception>
 #include <cstring>
 #include <iostream>
+#include <chrono>
 
 extern "C"
 {
@@ -41,26 +42,30 @@ Encoder::~Encoder()
 void Encoder::threaded_poll()
 {
 	char rdbuf[5];
-	int fd = pfd.fd;
 	int ret = -1;
+	std::chrono::high_resolution_clock::time_point last = std::chrono::high_resolution_clock::now();
 
 	while( running )
 	{
 		memset( &rdbuf, 0, sizeof( rdbuf ) );
-		lseek( fd, 0, SEEK_SET );	//Place file descriptor at beginning of file
+		lseek( pfd.fd, 0, SEEK_SET );	//Place file descriptor at beginning of file
 
-		ret = poll( &pfd, 1, 100 );	//Dont poll for -1 since we need to be able to stop()
+		ret = poll( &pfd, 1, 1000 );	//Dont poll for -1 since we need to be able to stop()
 		if( ret < 0 )		//Error
 			throw std::string( "poll failed." );
 		else if( ret == 0 )	//Timeout
 			continue;
 
-		ret = read( fd, rdbuf, sizeof( rdbuf ) - 1 );	//Read the pin value;
-		if( ret < 0 )
-			throw std::string( "read failed." );
+		//Have to perform a dummy read. Interrupt will be triggered otherwise.
+		uint8_t dummy;
+		ret = read( pfd.fd, &dummy, 1 );
 
-		//Handle interrupt
-		std::cout << "Interrupt!" << std::endl << "Value: " << rdbuf << std::endl << std::endl;
+		//Interrupt occurred
+		std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
+		long diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
+		last = now;
+
+		std::cout << "Interrupt!" << std::endl << "Diff: " << diff << std::endl << std::endl;
 	}
 }
 
