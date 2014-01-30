@@ -12,7 +12,7 @@ using namespace std;
 
 int main()
 {
-	Encoder enc( 17, MODE_RISING );
+	Encoder enc( 17 );
 
 	return 0;
 }

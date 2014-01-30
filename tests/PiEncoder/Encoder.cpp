@@ -19,7 +19,7 @@ extern "C"
 #include <unistd.h>
 }
 
-Encoder::Encoder( int pin, int mode ) : running( false ), _mode( mode )
+Encoder::Encoder( int pin ) : running( false )
 {
 	std::stringstream path;
 	path << "/sys/class/gpio/gpio" << pin << "/value";
@@ -31,6 +31,8 @@ Encoder::Encoder( int pin, int mode ) : running( false ), _mode( mode )
 
 	running = true;
 	poll_thread = std::thread( &Encoder::threaded_poll, this );
+
+	int_delay_buf.clear();
 }
 
 Encoder::~Encoder()
@@ -39,11 +41,26 @@ Encoder::~Encoder()
 	stop();
 }
 
+double Encoder::getRpm()
+{
+	if( int_delay_buf.size() <= 0 )
+		return 0.0f;
+
+	double avg_delay = 0.0f;
+	for( auto d : int_delay_buf )
+		avg_delay += d;
+
+	return (1.0f / (avg_delay / int_delay_buf.size())) / PULSES_PER_REVOLUTION;
+}
+
 void Encoder::threaded_poll()
 {
+	using std::chrono::high_resolution_clock;
+	using std::chrono::duration_cast;
+
 	char rdbuf[5];
 	int ret = -1;
-	std::chrono::high_resolution_clock::time_point last = std::chrono::high_resolution_clock::now();
+	high_resolution_clock::time_point last_int = high_resolution_clock::now();
 
 	while( running )
 	{
@@ -52,20 +69,30 @@ void Encoder::threaded_poll()
 
 		ret = poll( &pfd, 1, 1000 );	//Dont poll for -1 since we need to be able to stop()
 		if( ret < 0 )		//Error
+		{
 			throw std::string( "poll failed." );
+		}
 		else if( ret == 0 )	//Timeout
+		{
+			int_delay_buf.clear();
 			continue;
+		}
+
+		//Interrupt occurred
 
 		//Have to perform a dummy read. Interrupt will be triggered otherwise.
 		uint8_t dummy;
 		ret = read( pfd.fd, &dummy, 1 );
 
-		//Interrupt occurred
-		std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
-		long diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - last).count();
-		last = now;
+		//Add current delay time to buffer
+		high_resolution_clock::time_point now = high_resolution_clock::now();
+		int_delay_buf.push_back( (double)(duration_cast<std::chrono::microseconds>( now - last_int ).count() / 1000000) );
 
-		std::cout << "Interrupt!" << std::endl << "Diff: " << diff << std::endl << std::endl;
+		//Limit the buffer size
+		if( int_delay_buf.size() > MAX_INT_DELAY_BUF_ENTRIES )
+			int_delay_buf.erase( int_delay_buf.begin() );
+
+		last_int = now;
 	}
 }
 

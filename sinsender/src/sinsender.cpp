@@ -11,14 +11,20 @@
 #include <cmath>
 #include <cstdlib>
 #include <ostream>
+#include <csignal>
 
 extern "C"
 {
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <signal.h>
 }
+
+/* Parameters
+ */
+#define N_RETRIES 5 			//How many times we retry sending before calling it a failure
+#define DELAY_TIME_US 10000		//Delay time for main loop
+#define DELAY_TIME_S 0
 
 using namespace std;
 
@@ -57,7 +63,7 @@ void exit_handler( int signal )
 
 	cout << " exiting..." << endl;
 
-	exit( 0 );
+	exit( EXIT_SUCCESS );
 }
 
 /* connect
@@ -118,6 +124,8 @@ bool is_valid_port( string str )
 	return true;
 }
 
+/* main
+ */
 int main( int argc, char **argv )
 {
 	//Handle program arguments
@@ -130,6 +138,7 @@ int main( int argc, char **argv )
 	string host = argv[1];
 	string port = argv[2];
 
+	//Validate hostname and port
 	if( host.size() <= 1 )
 	{
 		cerr << "Please enter a valid hostname or ip" << endl;
@@ -140,8 +149,6 @@ int main( int argc, char **argv )
 		cerr << "Please enter a port number between 0 - 65535" << endl;
 		return 1;
 	}
-
-	double value = 0.0f;
 
 	//Setup exit handler
 	ssignal( SIGINT, exit_handler );
@@ -157,16 +164,19 @@ int main( int argc, char **argv )
 
 	//Set timeout for recv function
 	struct timeval recv_timeout;
-	recv_timeout.tv_sec = 0;
-	recv_timeout.tv_usec = 100000;
+	recv_timeout.tv_sec =  DELAY_TIME_S;
+	recv_timeout.tv_usec = DELAY_TIME_US;
 
 	setsockopt( g_sock_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&recv_timeout, sizeof( struct timeval ) );
 
 	int fail_counter = 0;
+	double value = 0.0f;
 
 	while( true )
 	{
 		ostringstream tx;
+
+		//Calculate sin and cos on the incrementing variable
 		tx << sin( value ) * 100.0f << ';' << cos( value ) * 100.0f << ';';
 
 		if( (send( g_sock_fd, (void *)tx.str().c_str(), tx.str().size(), 0 )) == -1 )
@@ -179,7 +189,7 @@ int main( int argc, char **argv )
 			fail_counter = 0;
 		}
 
-		if( fail_counter >= 10 )
+		if( fail_counter >= N_RETRIES )
 		{
 			cerr << "Server has gone away." << endl;
 			break;
@@ -189,16 +199,18 @@ int main( int argc, char **argv )
 		char rx[1024];
 		int bytes_received = recv( g_sock_fd, &rx, sizeof( rx ), 0 );
 
+		//Print received data to stdout if any.
 		if( bytes_received > 0 )
 			cout << rx << endl;
 
 		value = (value + 0.05f);
 	}
 
+	//Cleanup
 	freeaddrinfo( g_host_info_list );
 	close( g_sock_fd );
 
 	cout << "Exiting..." << endl;
 
-	return 0;
+	return EXIT_SUCCESS;
 }

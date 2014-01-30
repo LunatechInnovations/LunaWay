@@ -9,29 +9,30 @@
 #define ENCODER_H_
 
 #include <thread>
+#include <vector>
 
 extern "C"
 {
 #include <poll.h>
 }
 
-#define MODE_RISING 1
-#define MODE_FALLING 0
-
+#define MAX_INT_DELAY_BUF_ENTRIES 10
+#define PULSES_PER_REVOLUTION 15
 
 class Encoder
 {
 	public:
-		Encoder( int pin, int mode );
+		Encoder( int pin );
 		virtual ~Encoder();
 		void stop();
+		double getRpm();
 
 	private:
 		void threaded_poll();
 		struct pollfd pfd;
 		std::thread poll_thread;
 		volatile bool running;
-		int _mode;
+		std::vector<double> int_delay_buf;
 };
 
 #endif /* ENCODER_H_ */
