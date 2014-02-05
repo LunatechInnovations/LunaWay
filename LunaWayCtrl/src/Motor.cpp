@@ -64,15 +64,9 @@ void Motor::thread_cyclic()
 		}
 
 		if( dir )
-		{
 			digitalWrite( _dirpin, HIGH );
-			std::cout << "HIGH" << std::endl;
-		}
 		else
-		{
 			digitalWrite( _dirpin, LOW );
-			std::cout << "LOW" << std::endl;
-		}
 
 
 		digitalWrite( _pwmpin, LOW );
