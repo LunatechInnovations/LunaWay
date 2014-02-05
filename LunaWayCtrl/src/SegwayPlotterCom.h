@@ -10,13 +10,24 @@
 
 #include <string>
 
+extern "C"
+{
+#include <netdb.h>
+#include <sys/socket.h>
+#include <unistd.h>
+}
+
 class SegwayPlotterCom
 {
 	public:
 		SegwayPlotterCom();
 		virtual ~SegwayPlotterCom();
-		bool connect( std::string host, int port );
-		bool send( std::string data );
+		bool conn( std::string host, int port );
+		bool sendData( std::string data );
+
+	private:
+		struct addrinfo *host_info_list;
+		int sock_fd;
 };
 
 #endif /* SEGWAYPLOTTERCOM_H_ */

@@ -12,6 +12,11 @@
 #include "Encoder.h"
 #include "Motor.h"
 #include "Switch.h"
+#include "MPU6050.h"
+#include <iomanip>
+#include <cmath>
+#include "SegwayPlotterCom.h"
+#include <sstream>
 
 extern "C"
 {
@@ -36,15 +41,35 @@ extern "C"
  * 13		9		21		PWM right motor
  */
 
-enum Outputs
-{
-	OutpPwmLeft = 26,
-	OutpPwmRight = 23,
-	OutpDirLeft = 24,
-	OutpDirRight = 21
-};
-
 using namespace std;
+
+MPU6050 g_accelgyro( 0x69 );
+/* alpha = accelerometer fw/back
+ * alphadot = gyro fw/back
+ * beta = accelerometer right/left
+ * betadot = gyro right/left
+ */
+
+double g_alpha, g_alphadot, g_beta, g_betadot;
+
+void read_sensors()
+{
+	int16_t accX, accY, accZ, gyroX, gyroY, gyroZ;
+	g_accelgyro.getMotion6( &accX, &accY, &accZ, &gyroX, &gyroY, &gyroZ );
+
+	if( accZ > 16383 )
+		accZ = 16383;
+	if( accY > 16383 )
+		accY = 16383;
+	if( accX > 16383 )
+		accX = 16383;
+
+	g_alphadot = ((double)gyroY / 250.0f) * (M_PI / 180.0f);
+	g_betadot = ((double)gyroZ / 250.0f) * (M_PI / 180.0f);
+
+	g_alpha = asin( (double)accZ / 16383.75f );
+	g_beta = asin( (double)accY / 16383.75f );
+}
 
 int main()
 {
@@ -56,6 +81,12 @@ int main()
 
 	try
 	{
+		SegwayPlotterCom spc;
+		if( spc.conn( "192.168.0.137", 5555 ) )
+		{
+			cerr << "Failed to connect" << endl;
+		}
+
 		Encoder leftEncoder( 11 );
 		Encoder rightEncoder( 17 );
 		Motor rightMotor( 12, 13, 100.0f );
@@ -66,16 +97,30 @@ int main()
 
 		Switch enableSwitch( 7 );
 
+		g_accelgyro.initialize();
+
+		if( !g_accelgyro.testConnection() )
+		{
+			cerr << "I2C Error" << endl;
+			return 1;
+		}
+
 		while( true )
 		{
-//			cout << leftEncoder.getRps() << '\t' << rightEncoder.getRps() << endl;
-			sleep( 1 );
-			cout << (int)enableSwitch.getValue() << endl;
-//			double newoutp = 0.0f;
-//			cout << "Output: ";
-//			cin >> newoutp;
-//			cout << "New value: " << newoutp << endl;
-//			rightMotor.setOutput( newoutp );
+			usleep( 100000 );
+
+			if( !enableSwitch.getValue() )
+			{
+				leftMotor.setOutput( 0.0f );
+				rightMotor.setOutput( 0.0f );
+
+				continue;
+			}
+
+			read_sensors();
+			stringstream sockdata;
+			sockdata << g_beta << ';' << g_betadot << ';' << g_alpha << ';' << g_alphadot << ';';
+			spc.sendData( sockdata.str() );
 		}
 	}
 	catch( string &e )
