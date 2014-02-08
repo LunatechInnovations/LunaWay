@@ -6,23 +6,32 @@
 // Description : Hello World in C++, Ansi-style
 //============================================================================
 
+#define _GLIBCXX_USE_NANOSLEEP 1
 #include <iostream>
 #include <vector>
 #include <wiringPi.h>
 #include "Encoder.h"
 #include "Motor.h"
 #include "Switch.h"
-#include "MPU6050.h"
 #include <iomanip>
 #include <cmath>
 #include "SegwayPlotterCom.h"
 #include <sstream>
+#include "Angles.h"
+#include "PID.h"
+#include <chrono>
+#include <thread>
 
 extern "C"
 {
 #include <unistd.h>
 #include <signal.h>
+#include <sched.h>
+#include <sys/mman.h>
 }
+
+#define DEBUG
+//#undef DEBUG
 
 /* Wiringpi	GPIO	Physical
  * 0		17		11		interrupt left encoder
@@ -42,86 +51,89 @@ extern "C"
  */
 
 using namespace std;
+using namespace chrono;
 
-MPU6050 g_accelgyro( 0x69 );
-/* alpha = accelerometer fw/back
- * alphadot = gyro fw/back
- * beta = accelerometer right/left
- * betadot = gyro right/left
- */
+volatile bool g_running = true;
 
-double g_alpha, g_alphadot, g_beta, g_betadot;
-
-void read_sensors()
+void signal_callback( int )
 {
-	int16_t accX, accY, accZ, gyroX, gyroY, gyroZ;
-	g_accelgyro.getMotion6( &accX, &accY, &accZ, &gyroX, &gyroY, &gyroZ );
-
-	if( accZ > 16383 )
-		accZ = 16383;
-	if( accY > 16383 )
-		accY = 16383;
-	if( accX > 16383 )
-		accX = 16383;
-
-	g_alphadot = ((double)gyroY / 250.0f) * (M_PI / 180.0f);
-	g_betadot = ((double)gyroZ / 250.0f) * (M_PI / 180.0f);
-
-	g_alpha = asin( (double)accZ / 16383.75f );
-	g_beta = asin( (double)accY / 16383.75f );
+	g_running = false;
 }
 
 int main()
 {
-	if( wiringPiSetup() == -1 )
-	{
-		cerr << "wiringPiSetup failed!" << endl;
-		return 1;
-	}
-
 	try
 	{
+		//TODO loose wiringpi dependency
+		if( wiringPiSetup() == -1 )
+			throw "Failed to setup wiringpi.";
+
+		signal( SIGINT, signal_callback );
+		signal( SIGTERM, signal_callback );
+		milliseconds cycle_time( 100 );
+
+		//Set scheduler priority
+		sched_param sp;
+		sp.__sched_priority = 49;
+		if( sched_setscheduler( 0, SCHED_FIFO, &sp ) == -1 )
+			throw string( "Failed to set scheduler." );
+
+
+#ifdef DEBUG
 		SegwayPlotterCom spc;
-		if( spc.conn( "192.168.0.137", 5555 ) )
-		{
-			cerr << "Failed to connect" << endl;
-		}
+		if( !spc.conn( "192.168.0.137", 5555 ) )
+			throw string( "Failed to connect" );
+#endif
 
 		Encoder leftEncoder( 11 );
 		Encoder rightEncoder( 17 );
 		Motor rightMotor( 12, 13, 100.0f );
 		Motor leftMotor( 10, 11, 100.0f );
 
-		rightMotor.setOutput( 70.0f );
-		leftMotor.setOutput( -70.0f );
+		//Don't swap memory. Start all threads before this.
+		if( (mlockall( MCL_CURRENT|MCL_FUTURE )) == -1 )
+			throw string( "mlockall failed." );
 
 		Switch enableSwitch( 7 );
 
-		g_accelgyro.initialize();
+		Angles angles;
 
-		if( !g_accelgyro.testConnection() )
-		{
-			cerr << "I2C Error" << endl;
-			return 1;
-		}
+		PID pid( 20.0f, 0.2f, -100.0f, 100.0f );
 
-		while( true )
+		while( g_running )
 		{
-			usleep( 100000 );
+			high_resolution_clock::time_point start_time = high_resolution_clock::now();
 
 			if( !enableSwitch.getValue() )
 			{
 				leftMotor.setOutput( 0.0f );
 				rightMotor.setOutput( 0.0f );
 
+				this_thread::sleep_until( start_time + cycle_time );
+
 				continue;
 			}
 
-			read_sensors();
+			angles.calculate();
+			double output = pid.regulate( angles.getPitch() - 10.0f, angles.getPitchGyroRate() / 8.0f );
+
+			leftMotor.setOutput( output );
+			rightMotor.setOutput( output );
+
+#ifdef DEBUG
+			//Send debug values
 			stringstream sockdata;
-			sockdata << g_beta << ';' << g_betadot << ';' << g_alpha << ';' << g_alphadot << ';';
+			sockdata << angles.getPitch() << ";" << angles.getDebug() << ";" << endl;
 			spc.sendData( sockdata.str() );
+#endif
+
+			this_thread::sleep_until( start_time + cycle_time );
 		}
+
+		leftMotor.stop();
+		rightMotor.stop();
+		leftEncoder.stop();
+		rightEncoder.stop();
 	}
 	catch( string &e )
 	{
@@ -133,6 +145,8 @@ int main()
 		cout << "Undefined error." << endl;
 		return 1;
 	}
+
+	cout << endl << "Thank you and goodbye!" << endl;
 
 	return 0;
 }

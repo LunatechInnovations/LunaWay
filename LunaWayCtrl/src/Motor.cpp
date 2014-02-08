@@ -58,7 +58,7 @@ void Motor::thread_cyclic()
 
 		if( tmp_outp == 0.0f )
 		{
-			digitalWrite( _pwmpin, LOW );
+			digitalWrite( _pwmpin, HIGH );
 			std::this_thread::sleep_for( total_us );
 			continue;
 		}
@@ -79,6 +79,8 @@ void Motor::thread_cyclic()
 
 void Motor::stop()
 {
+	digitalWrite( _pwmpin, HIGH );
+
 	if( running )
 	{
 		running = false;

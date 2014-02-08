@@ -1,7 +1,7 @@
 CC	= /home/john/raspistuff/toolchain/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-g++
 CFLAGS	= -Wall -std=c++11 -I/home/john/raspistuff/toolchain/rootfs_monstermash/rootfs/usr/local/include
 LDFLAGS = -L/home/john/raspistuff/toolchain/rootfs_monstermash/rootfs/usr/local/lib -lwiringPi
-ALLOBJS = main.o Encoder.o Motor.o Switch.o SegwayPlotterCom.o I2Cdev.o MPU6050.o
+ALLOBJS = main.o Encoder.o Motor.o Switch.o SegwayPlotterCom.o I2Cdev.o MPU6050.o Angles.o PID.o
 TARGET = LunaWayCtrl
 
 all: $(TARGET)
@@ -29,6 +29,12 @@ I2Cdev.o : src/I2Cdev.cpp
 
 MPU6050.o : src/MPU6050.cpp
 	$(CC) -c src/MPU6050.cpp $(CFLAGS)
+	
+Angles.o : src/Angles.cpp
+	$(CC) -c src/Angles.cpp $(CFLAGS)
+	
+PID.o : src/PID.cpp
+	$(CC) -c src/PID.cpp $(CFLAGS)
 	
 clean: 
 	rm -f $(ALLOBJS) $(TARGET)

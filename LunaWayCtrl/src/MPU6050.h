@@ -38,7 +38,10 @@ THE SOFTWARE.
 #define _MPU6050_H_
 
 #include "I2Cdev.h"
-//#include <avr/pgmspace.h>
+extern "C"
+{
+#include <inttypes.h>
+}
 
 #define pgm_read_byte(p) (*(uint8_t *)(p))
 
