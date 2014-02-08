@@ -33,6 +33,11 @@ segwayPlotter::segwayPlotter( QWidget *parent ) : QMainWindow( parent ), ui( new
     ui->wdgTrend->graph( 2 )->setLineStyle( QCPGraph::lsLine );
     ui->wdgTrend->graph( 2 )->setName( "Trend3" );
 
+    ui->wdgTrend->addGraph( ui->wdgTrend->xAxis, ui->wdgTrend->yAxis );
+    ui->wdgTrend->graph( 3 )->setPen( QPen( Qt::yellow ) );
+    ui->wdgTrend->graph( 3 )->setLineStyle( QCPGraph::lsLine );
+    ui->wdgTrend->graph( 3 )->setName( "Trend3" );
+
     ui->wdgTrend->xAxis->setVisible( true );
     ui->wdgTrend->xAxis->setAutoTicks( false );
     ui->wdgTrend->xAxis->setTickLabels( false );
@@ -167,6 +172,8 @@ void segwayPlotter::plotValues( QVector<double> values )
             ui->wdgTrend->graph( 1 )->addData( n_samples, values[1] );
         if( values.count() > 2 )
             ui->wdgTrend->graph( 2 )->addData( n_samples, values[2] );
+        if( values.count() > 3 )
+            ui->wdgTrend->graph( 3 )->addData( n_samples, values[2] );
 
         n_samples += 1.0f;
     }
