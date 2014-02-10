@@ -26,6 +26,7 @@ extern "C"
 #include <signal.h>
 #include <sched.h>
 #include <sys/mman.h>
+#include <syslog.h>
 }
 
 #define DEBUG
@@ -62,9 +63,13 @@ int main()
 {
 	try
 	{
+		//Initiate system log
+		openlog( "LunaWayCtrl", LOG_PID | LOG_CONS | LOG_NDELAY, LOG_LOCAL1 );
+		syslog( LOG_INFO, "Application started" );
+
 		//TODO loose wiringpi dependency
 		if( wiringPiSetup() == -1 )
-			throw "Failed to setup wiringpi.";
+			throw string( "Failed to setup wiringpi." );
 
 		signal( SIGINT, signal_callback );
 		signal( SIGTERM, signal_callback );
@@ -137,15 +142,22 @@ int main()
 	catch( string &e )
 	{
 		cout << "Error: " << e << endl;
+		syslog( LOG_ERR, e.c_str() );
+		closelog();
+
 		return 1;
 	}
 	catch( ... )
 	{
 		cout << "Undefined error." << endl;
+		syslog( LOG_ERR, "Undefined error" );
+		closelog();
 		return 1;
 	}
 
 	cout << endl << "Thank you and goodbye!" << endl;
+	syslog( LOG_INFO, "Application terminated" );
+	closelog();
 
 	return 0;
 }
