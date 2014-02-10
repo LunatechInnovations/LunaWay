@@ -68,7 +68,5 @@ double PID::regulate( double error, double d_term )
 	else if( output < -100.0f )
 		output = -100.0f;
 
-//	std::cout << error << p_term << '\t' << i_term << '\t' << d_term << '\t' << output << std::endl;
-
 	return output;
 }
