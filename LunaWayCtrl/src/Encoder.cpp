@@ -19,6 +19,10 @@ extern "C"
 #include <unistd.h>
 }
 
+Encoder::Encoder() : running( false )
+{
+}
+
 Encoder::Encoder( int pin ) : running( false )
 {
 	std::stringstream path;

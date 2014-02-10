@@ -34,7 +34,7 @@ Angles::~Angles()
 void Angles::calculate()
 {
 	int16_t accX, accY, accZ, gyroX, gyroY, gyroZ;
-	double acc_term = 0.9f;
+	double acc_term = 0.98f;
 	std::chrono::high_resolution_clock::time_point current_time = std::chrono::high_resolution_clock::now();
 	std::chrono::milliseconds dT = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - prev_calculate);
 

@@ -22,6 +22,7 @@ extern "C"
 class Encoder
 {
 	public:
+		Encoder();
 		Encoder( int pin );
 		virtual ~Encoder();
 		void stop();

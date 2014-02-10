@@ -9,6 +9,7 @@
 #define SEGWAYPLOTTERCOM_H_
 
 #include <string>
+#include <thread>
 
 extern "C"
 {
@@ -28,6 +29,8 @@ class SegwayPlotterCom
 	private:
 		struct addrinfo *host_info_list;
 		int sock_fd;
+		void recv_cyclic();
+		std::thread recv_thread;
 };
 
 #endif /* SEGWAYPLOTTERCOM_H_ */

@@ -6,11 +6,9 @@
 // Description : Hello World in C++, Ansi-style
 //============================================================================
 
-#define _GLIBCXX_USE_NANOSLEEP 1
 #include <iostream>
 #include <vector>
 #include <wiringPi.h>
-#include "Encoder.h"
 #include "Motor.h"
 #include "Switch.h"
 #include <iomanip>
@@ -70,7 +68,7 @@ int main()
 
 		signal( SIGINT, signal_callback );
 		signal( SIGTERM, signal_callback );
-		milliseconds cycle_time( 100 );
+		milliseconds cycle_time( 20 );
 
 		//Set scheduler priority
 		sched_param sp;
@@ -85,20 +83,18 @@ int main()
 			throw string( "Failed to connect" );
 #endif
 
-		Encoder leftEncoder( 11 );
-		Encoder rightEncoder( 17 );
-		Motor rightMotor( 12, 13, 100.0f );
-		Motor leftMotor( 10, 11, 100.0f );
+		Motor rightMotor( 12, 13, 17, 500.0f );
+		Motor leftMotor( 10, 11, 11, 500.0f );
 
 		//Don't swap memory. Start all threads before this.
 		if( (mlockall( MCL_CURRENT|MCL_FUTURE )) == -1 )
 			throw string( "mlockall failed." );
 
 		Switch enableSwitch( 7 );
-
 		Angles angles;
+		//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
 
-		PID pid( 20.0f, 0.2f, -100.0f, 100.0f );
+		PID pid( 27.0f, 0.0f, -30.0f, 30.0f );
 
 		while( g_running )
 		{
@@ -114,8 +110,13 @@ int main()
 				continue;
 			}
 
+			/* cycle_time=20
+			 * p = 27.5
+			 * I = 0.0
+			 * gyro_rate * .1
+			 */
 			angles.calculate();
-			double output = pid.regulate( angles.getPitch() - 10.0f, angles.getPitchGyroRate() / 8.0f );
+			double output = pid.regulate( angles.getPitch() - 2.5f, angles.getPitchGyroRate() * 0.05f );
 
 			leftMotor.setOutput( output );
 			rightMotor.setOutput( output );
@@ -123,7 +124,7 @@ int main()
 #ifdef DEBUG
 			//Send debug values
 			stringstream sockdata;
-			sockdata << angles.getPitch() << ";" << angles.getDebug() << ";" << endl;
+			sockdata << angles.getPitch() << ";" << leftMotor.getOutput() << ";" << endl;
 			spc.sendData( sockdata.str() );
 #endif
 
@@ -132,8 +133,6 @@ int main()
 
 		leftMotor.stop();
 		rightMotor.stop();
-		leftEncoder.stop();
-		rightEncoder.stop();
 	}
 	catch( string &e )
 	{

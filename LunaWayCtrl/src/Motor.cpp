@@ -12,7 +12,8 @@
 #include <iostream>
 
 using namespace std::chrono;
-Motor::Motor( int dirpin, int pwmpin, int freq ) : _dirpin( dirpin ), _pwmpin( pwmpin ), _freq( freq )
+Motor::Motor( int dirpin, int pwmpin, int encoderpin, int freq )
+	  : _dirpin( dirpin ), _pwmpin( pwmpin ), _freq( freq )
 {
 	output = 0.0f;
 	running = false;
@@ -20,12 +21,15 @@ Motor::Motor( int dirpin, int pwmpin, int freq ) : _dirpin( dirpin ), _pwmpin( p
 	pinMode( dirpin, OUTPUT );
 	pinMode( pwmpin, OUTPUT );
 
+	encoder = new Encoder( encoderpin );
+
 	thread = std::thread( &Motor::thread_cyclic, this );
 }
 
 Motor::~Motor()
 {
 	stop();
+	delete encoder;
 }
 
 void Motor::setOutput( double value )
@@ -36,6 +40,16 @@ void Motor::setOutput( double value )
 	output_mutex.lock();
 	output = value;
 	output_mutex.unlock();
+}
+
+double Motor::getRPS()
+{
+	return encoder->getRps();
+}
+
+double Motor::getOutput()
+{
+	return output;
 }
 
 void Motor::thread_cyclic()
@@ -79,6 +93,8 @@ void Motor::thread_cyclic()
 
 void Motor::stop()
 {
+	encoder->stop();
+
 	digitalWrite( _pwmpin, HIGH );
 
 	if( running )

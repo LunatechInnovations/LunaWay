@@ -8,20 +8,19 @@
 #ifndef MOTOR_H_
 #define MOTOR_H_
 
-#ifndef _GLIBCXX_USE_NANOSLEEP
-#define _GLIBCXX_USE_NANOSLEEP
-#endif
-
 #include <thread>
 #include <mutex>
+#include "Encoder.h"
 
 class Motor
 {
 	public:
-		Motor( int dirpin, int pwmpin, int freq );
+		Motor( int dirpin, int pwmpin, int encoderpin, int freq );
 		virtual ~Motor();
 		void stop();
 		void setOutput( double value );
+		double getRPS();
+		double getOutput();
 
 	private:
 		int _dirpin;
@@ -32,6 +31,7 @@ class Motor
 		double output;
 		double _freq;
 		std::mutex output_mutex;
+		Encoder *encoder;
 };
 
 #endif /* MOTOR_H_ */

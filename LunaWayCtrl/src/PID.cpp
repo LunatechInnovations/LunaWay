@@ -62,7 +62,7 @@ double PID::regulate( double error, double d_term )
 		_istate = _istate_min;
 	double i_term = _i * _istate;
 
-	double output = p_term + i_term - d_term;
+	double output = p_term + i_term + d_term;
 	if( output > 100.0f )
 		output = 100.0f;
 	else if( output < -100.0f )
