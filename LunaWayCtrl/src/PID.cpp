@@ -28,17 +28,23 @@ PID::~PID()
 
 void PID::setP( double p )
 {
+	p_mutex.lock();
 	_p = p;
+	p_mutex.unlock();
 }
 
 void PID::setI( double i )
 {
+	i_mutex.lock();
 	_i = i;
+	i_mutex.unlock();
 }
 
 void PID::setD( double d )
 {
+	d_mutex.lock();
 	_d = d;
+	d_mutex.unlock();
 }
 
 void PID::setMaxIState( double max )
@@ -59,16 +65,22 @@ void PID::setIStateLimits( double min, double max )
 
 double PID::regulate( double error, double gyro_rate )
 {
+	p_mutex.lock();
 	double p_term = error * _p;
+	p_mutex.unlock();
 
 	_istate += error;
 	if( _istate > _istate_max )
 		_istate = _istate_max;
 	else if( _istate < _istate_min )
 		_istate = _istate_min;
+	i_mutex.lock();
 	double i_term = _i * _istate;
+	i_mutex.unlock();
 
+	d_mutex.lock();
 	double d_term = gyro_rate * _d;
+	d_mutex.unlock();
 
 	double output = p_term + i_term + d_term;
 	if( output > 100.0f )

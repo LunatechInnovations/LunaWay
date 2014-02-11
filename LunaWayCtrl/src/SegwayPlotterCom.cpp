@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <vector>
 
 extern "C"
 {
@@ -19,6 +20,14 @@ extern "C"
 #define RECV_BUFFER_SIZE 1024
 
 SegwayPlotterCom::SegwayPlotterCom()
+{
+	sock_fd = -1;
+	host_info_list = nullptr;
+	running = false;
+	_pid = nullptr;
+}
+
+SegwayPlotterCom::SegwayPlotterCom( PID *pid ) : _pid( pid )
 {
 	sock_fd = -1;
 	host_info_list = nullptr;
@@ -84,10 +93,10 @@ void SegwayPlotterCom::recv_cyclic()
 {
 	//Set timeout for recv function
 	struct timeval recv_timeout;
-	recv_timeout.tv_sec =  1;
+	recv_timeout.tv_sec =  5;
 	recv_timeout.tv_usec = 0;
 
-	setsockopt( sock_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&recv_timeout, sizeof( struct timeval ) );
+	setsockopt( sock_fd, SOL_SOCKET, SO_RCVTIMEO, (void *)&recv_timeout, sizeof( struct timeval ) );
 
 	running = true;
 	while( running )
@@ -97,16 +106,54 @@ void SegwayPlotterCom::recv_cyclic()
 
 		//Print received data to stdout if any.
 		if( bytes_received > 0 )
+			setPID( std::string( rx ) );
+	}
+}
+
+void SegwayPlotterCom::setPID( std::string msg )
+{
+	std::vector<std::string> entries;
+	std::string current;
+	//Split message string at ';'
+	for( auto i : msg )
+	{
+		if( i == ';' )
 		{
-			std::cout << rx << std::endl;
-		}
-		else if( bytes_received == 0 )
-		{
-			std::cout << "recv timeout" << std::endl;
+			entries.push_back( current );
+			current.clear();
 		}
 		else
 		{
-			throw std::string( "recv failed." );
+			current.push_back( i );
+		}
+	}
+
+	//Check entries for parameters
+	for( auto i : entries )
+	{
+		std::stringstream conv;
+		double value = 0.0f;
+
+		if( i.substr( 0, 2 ) == "p=" )
+		{
+			conv << i.substr( 2, i.size() - 1 );
+			conv >> value;
+
+			_pid->setP( value );
+		}
+		else if( i.substr( 0, 2 ) == "i=" )
+		{
+			conv << i.substr( 2, i.size() - 1 );
+			conv >> value;
+
+			_pid->setI( value );
+		}
+		else if( i.substr( 0, 2 ) == "d=" )
+		{
+			conv << i.substr( 2, i.size() - 1 );
+			conv >> value;
+
+			_pid->setD( value );
 		}
 	}
 }

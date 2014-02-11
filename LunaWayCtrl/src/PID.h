@@ -8,6 +8,8 @@
 #ifndef PID_H_
 #define PID_H_
 
+#include <mutex>
+
 class PID
 {
 	public:
@@ -26,6 +28,7 @@ class PID
 	private:
 		double _p, _i, _d;
 		double _istate, _istate_max, _istate_min;
+		std::mutex p_mutex, i_mutex, d_mutex;
 };
 
 #endif /* PID_H_ */

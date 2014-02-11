@@ -6,6 +6,9 @@
 // Description : Hello World in C++, Ansi-style
 //============================================================================
 
+#define DEBUG
+//#undef DEBUG
+
 #include <iostream>
 #include <vector>
 #include <wiringPi.h>
@@ -13,13 +16,16 @@
 #include "Switch.h"
 #include <iomanip>
 #include <cmath>
-#include "SegwayPlotterCom.h"
 #include <sstream>
 #include "Angles.h"
 #include "PID.h"
 #include <chrono>
 #include <thread>
 #include <system_error>
+
+#ifdef DEBUG
+#include "SegwayPlotterCom.h"
+#endif
 
 extern "C"
 {
@@ -30,13 +36,12 @@ extern "C"
 #include <syslog.h>
 }
 
-#define DEBUG
-//#undef DEBUG
 
 #define START_P 27.0f
 #define START_I 0.0f
 #define START_D 0.05f
 #define START_IRANGE 30
+#define START_SV 2.5f
 
 /* Wiringpi	GPIO	Physical
  * 0		17		11		interrupt left encoder
@@ -87,9 +92,10 @@ int main()
 		if( sched_setscheduler( 0, SCHED_FIFO, &sp ) == -1 )
 			throw string( "Failed to set scheduler." );
 
+		PID pid( START_P, START_I, START_D, -START_IRANGE, START_IRANGE );
 
 #ifdef DEBUG
-		SegwayPlotterCom spc;
+		SegwayPlotterCom spc( &pid );
 		if( !spc.conn( "192.168.0.137", 5555 ) )
 			throw string( "Failed to connect" );
 #endif
@@ -104,7 +110,6 @@ int main()
 		Switch enableSwitch( 7 );
 		Angles angles;
 
-		PID pid( START_P, START_I, START_D, -START_IRANGE, START_IRANGE );
 
 		while( g_running )
 		{
@@ -114,22 +119,22 @@ int main()
 			{
 				leftMotor.setOutput( 0.0f );
 				rightMotor.setOutput( 0.0f );
+			}
+			else
+			{
+				/* cycle_time=20
+				 * p = 27.5
+				 * I = 0.0
+				 * gyro_rate * .1
+				 */
+				angles.calculate();
+				double output = pid.regulate( angles.getPitch() - START_SV, angles.getPitchGyroRate() );
 
-				this_thread::sleep_until( start_time + cycle_time );
-
-				continue;
+				leftMotor.setOutput( output );
+				rightMotor.setOutput( output );
 			}
 
-			/* cycle_time=20
-			 * p = 27.5
-			 * I = 0.0
-			 * gyro_rate * .1
-			 */
-			angles.calculate();
-			double output = pid.regulate( angles.getPitch() - 2.5f, angles.getPitchGyroRate() );
-
-			leftMotor.setOutput( output );
-			rightMotor.setOutput( output );
+			cout << angles.getPitch() << '\t' << leftMotor.getOutput() << endl;
 
 #ifdef DEBUG
 			//Send debug values
@@ -140,7 +145,9 @@ int main()
 
 			this_thread::sleep_until( start_time + cycle_time );
 		}
-
+#ifdef DEBUG
+		spc.stop();
+#endif
 		leftMotor.stop();
 		rightMotor.stop();
 	}
@@ -153,7 +160,7 @@ int main()
 	}
 	catch( const system_error &e )
 	{
-		syslog( LOG_ERR, string( "System error: " + e.what() ).c_str() );
+		syslog( LOG_ERR, string( string( "System error: " ) + e.what() ).c_str() );
 		closelog();
 
 		return 2;

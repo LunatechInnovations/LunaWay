@@ -10,6 +10,7 @@
 
 #include <string>
 #include <thread>
+#include "PID.h"
 
 extern "C"
 {
@@ -22,6 +23,7 @@ class SegwayPlotterCom
 {
 	public:
 		SegwayPlotterCom();
+		SegwayPlotterCom( PID *pid );
 		virtual ~SegwayPlotterCom();
 		bool conn( std::string host, int port );
 		bool sendData( std::string data );
@@ -33,6 +35,8 @@ class SegwayPlotterCom
 		void recv_cyclic();
 		std::thread recv_thread;
 		volatile bool running;
+		PID *_pid;
+		void setPID( std::string msg );
 };
 
 #endif /* SEGWAYPLOTTERCOM_H_ */
