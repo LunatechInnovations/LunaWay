@@ -25,12 +25,14 @@ class SegwayPlotterCom
 		virtual ~SegwayPlotterCom();
 		bool conn( std::string host, int port );
 		bool sendData( std::string data );
+		void stop();
 
 	private:
 		struct addrinfo *host_info_list;
 		int sock_fd;
 		void recv_cyclic();
 		std::thread recv_thread;
+		volatile bool running;
 };
 
 #endif /* SEGWAYPLOTTERCOM_H_ */
