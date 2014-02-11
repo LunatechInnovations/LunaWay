@@ -19,6 +19,7 @@
 #include "PID.h"
 #include <chrono>
 #include <thread>
+#include <system_error>
 
 extern "C"
 {
@@ -139,18 +140,26 @@ int main()
 		leftMotor.stop();
 		rightMotor.stop();
 	}
-	catch( string &e )
+	catch( const string &e )
 	{
 		syslog( LOG_ERR, e.c_str() );
 		closelog();
 
 		return 1;
 	}
+	catch( const system_error &e )
+	{
+		syslog( LOG_ERR, string( "System error: " + e.what() ).c_str() );
+		closelog();
+
+		return 2;
+	}
 	catch( ... )
 	{
 		syslog( LOG_ERR, "Undefined error" );
 		closelog();
-		return 1;
+
+		return 3;
 	}
 
 	syslog( LOG_INFO, "Application terminated" );
