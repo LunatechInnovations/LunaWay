@@ -41,7 +41,7 @@ extern "C"
 #define START_I 0.0f
 #define START_D 0.05f
 #define START_IRANGE 30
-#define START_SV 2.5f
+#define START_SV 0.0f
 
 /* Wiringpi	GPIO	Physical
  * 0		17		11		interrupt left encoder
