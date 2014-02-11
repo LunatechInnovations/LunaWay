@@ -33,6 +33,11 @@ extern "C"
 #define DEBUG
 //#undef DEBUG
 
+#define START_P 27.0f
+#define START_I 0.0f
+#define START_D 0.05f
+#define START_IRANGE 30
+
 /* Wiringpi	GPIO	Physical
  * 0		17		11		interrupt left encoder
  * 1		18		12
@@ -98,9 +103,8 @@ int main()
 
 		Switch enableSwitch( 7 );
 		Angles angles;
-		//kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
 
-		PID pid( 27.0f, 0.0f, -30.0f, 30.0f );
+		PID pid( START_P, START_I, START_D, -START_IRANGE, START_IRANGE );
 
 		while( g_running )
 		{
@@ -122,7 +126,7 @@ int main()
 			 * gyro_rate * .1
 			 */
 			angles.calculate();
-			double output = pid.regulate( angles.getPitch() - 2.5f, angles.getPitchGyroRate() * 0.05f );
+			double output = pid.regulate( angles.getPitch() - 2.5f, angles.getPitchGyroRate() );
 
 			leftMotor.setOutput( output );
 			rightMotor.setOutput( output );
