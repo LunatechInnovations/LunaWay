@@ -15,6 +15,7 @@
 class Motor : public AbstractCyclicThread
 {
 	public:
+		Motor();
 		Motor( int dirpin, int pwmpin, int encoderpin, int freq );
 		virtual ~Motor();
 		void setOutput( double value );

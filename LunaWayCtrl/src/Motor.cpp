@@ -12,6 +12,10 @@
 #include <iostream>
 
 using namespace std::chrono;
+Motor::Motor()
+{
+}
+
 Motor::Motor( int dirpin, int pwmpin, int encoderpin, int freq )
 	  : _dirpin( dirpin ), _pwmpin( pwmpin ), _freq( freq )
 {

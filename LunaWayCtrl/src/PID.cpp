@@ -8,17 +8,17 @@
 #include "PID.h"
 #include <iostream>
 
-PID::PID() : _p( 0.0f ), _i( 0.0f ), _d( 0.0f ), _istate( 0.0f ), _istate_max( 250.0f ), _istate_min( -250.0f )
+PID::PID() : _p( 0.0f ), _i( 0.0f ), _d( 0.0f ), _sv( 0.0f ), _istate( 0.0f ), _istate_max( 250.0f ), _istate_min( -250.0f )
 {
 }
 
-PID::PID( double p, double i, double d )
-	: _p( p ), _i( i ), _d( d ), _istate( 0.0f ), _istate_max( 250.0f ), _istate_min( -250.0f )
+PID::PID( double p, double i, double d, double sv )
+	: _p( p ), _i( i ), _d( d ), _sv( sv ), _istate( 0.0f ), _istate_max( 250.0f ), _istate_min( -250.0f )
 {
 }
 
-PID::PID( double p, double i, double d, double i_state_min, double i_state_max )
-    : _p( p ), _i( i ), _d( d ), _istate( 0.0f ), _istate_max( i_state_max ), _istate_min( i_state_min )
+PID::PID( double p, double i, double d, double sv, double i_state_min, double i_state_max )
+    : _p( p ), _i( i ), _d( d ), _sv( sv ), _istate( 0.0f ), _istate_max( i_state_max ), _istate_min( i_state_min )
 {
 }
 
@@ -63,8 +63,12 @@ void PID::setIStateLimits( double min, double max )
 	_istate_min = min;
 }
 
-double PID::regulate( double error, double gyro_rate )
+double PID::regulate( double pv, double gyro_rate )
 {
+	sv_mutex.lock();
+	double error = pv - _sv;
+	sv_mutex.unlock();
+
 	p_mutex.lock();
 	double p_term = error * _p;
 	p_mutex.unlock();
@@ -89,4 +93,11 @@ double PID::regulate( double error, double gyro_rate )
 		output = -100.0f;
 
 	return output;
+}
+
+void PID::setSV( double sv )
+{
+	sv_mutex.lock();
+	_sv = sv;
+	sv_mutex.unlock();
 }

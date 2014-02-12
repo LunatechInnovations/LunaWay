@@ -12,7 +12,6 @@
 #include <iostream>
 #include <vector>
 #include <wiringPi.h>
-#include "Motor.h"
 #include "Switch.h"
 #include <iomanip>
 #include <cmath>
@@ -22,6 +21,7 @@
 #include <chrono>
 #include <thread>
 #include <system_error>
+#include "Diff.h"
 
 #ifdef DEBUG
 #include "SegwayPlotterCom.h"
@@ -36,12 +36,19 @@ extern "C"
 #include <syslog.h>
 }
 
+//sample time = reg interval = 20mS
 
 #define START_P 27.0f
 #define START_I 0.0f
 #define START_D 0.05f
 #define START_IRANGE 30
 #define START_SV 0.0f
+#define SAMPLE_TIME 20	//mS
+#define REG_INTERVAL 40 / SAMPLE_TIME
+
+#ifdef DEBUG
+#define PLOT_INTERVAL 20 / SAMPLE_TIME
+#endif
 
 /* Wiringpi	GPIO	Physical
  * 0		17		11		interrupt left encoder
@@ -84,7 +91,7 @@ int main()
 
 		signal( SIGINT, signal_callback );
 		signal( SIGTERM, signal_callback );
-		milliseconds cycle_time( 20 );
+		milliseconds cycle_time( SAMPLE_TIME );
 
 		//Set scheduler priority
 		sched_param sp;
@@ -92,16 +99,16 @@ int main()
 		if( sched_setscheduler( 0, SCHED_FIFO, &sp ) == -1 )
 			throw string( "Failed to set scheduler." );
 
-		PID pid( START_P, START_I, START_D, -START_IRANGE, START_IRANGE );
+		PID pid( START_P, START_I, START_D, START_SV, -START_IRANGE, START_IRANGE );
 
 #ifdef DEBUG
 		SegwayPlotterCom spc( &pid );
 		if( !spc.conn( "192.168.0.137", 5555 ) )
 			throw string( "Failed to connect" );
+		int plot_interval = 0;
 #endif
 
-		Motor rightMotor( 12, 13, 17, 500.0f );
-		Motor leftMotor( 10, 11, 11, 500.0f );
+		Diff motor_diff;
 
 		//Don't swap memory. Start all threads before this.
 		if( (mlockall( MCL_CURRENT|MCL_FUTURE )) == -1 )
@@ -110,6 +117,7 @@ int main()
 		Switch enableSwitch( 7 );
 		Angles angles;
 
+		int reg_interval = 0;
 
 		while( g_running )
 		{
@@ -117,8 +125,7 @@ int main()
 
 			if( !enableSwitch.getValue() )
 			{
-				leftMotor.setOutput( 0.0f );
-				rightMotor.setOutput( 0.0f );
+				motor_diff.setOutput( 0.0f );
 			}
 			else
 			{
@@ -128,17 +135,34 @@ int main()
 				 * gyro_rate * .1
 				 */
 				angles.calculate();
-				double output = pid.regulate( angles.getPitch() - START_SV, angles.getPitchGyroRate() );
+				if( reg_interval >= REG_INTERVAL )
+				{
+					double output = pid.regulate( angles.getPitch(), angles.getPitchGyroRate() );
 
-				leftMotor.setOutput( output );
-				rightMotor.setOutput( output );
+					motor_diff.setOutput( output );
+
+					reg_interval = 0;
+				}
+				else
+				{
+					reg_interval++;
+				}
 			}
 
 #ifdef DEBUG
 			//Send debug values
-			stringstream sockdata;
-			sockdata << angles.getPitch() << ";" << leftMotor.getOutput() << ";" << endl;
-			spc.sendData( sockdata.str() );
+			if( plot_interval >= PLOT_INTERVAL )
+			{
+				stringstream sockdata;
+				sockdata << angles.getPitch() << ";" << motor_diff.getLeftMotorOutput() << ";" << endl;
+				spc.sendData( sockdata.str() );
+
+				plot_interval = 0;
+			}
+			else
+			{
+				plot_interval++;
+			}
 #endif
 
 			this_thread::sleep_until( start_time + cycle_time );
@@ -148,8 +172,7 @@ int main()
 #ifdef DEBUG
 		spc.stop();
 #endif
-		leftMotor.stop();
-		rightMotor.stop();
+		motor_diff.stopMotors();
 	}
 	catch( const string &e )
 	{

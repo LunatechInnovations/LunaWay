@@ -143,5 +143,12 @@ void SegwayPlotterCom::setPID( std::string msg )
 
 			_pid->setD( value );
 		}
+		else if( i.substr( 0, 3 ) == "sv=" )
+		{
+			conv << i.substr( 3, i.size() -1 );
+			conv >> value;
+
+			_pid->setSV( value );
+		}
 	}
 }

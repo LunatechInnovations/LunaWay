@@ -34,7 +34,7 @@ Angles::~Angles()
 void Angles::calculate()
 {
 	int16_t accX, accY, accZ, gyroX, gyroY, gyroZ;
-	double acc_term = 0.98f;
+	const double fc = 0.98f;
 	std::chrono::high_resolution_clock::time_point current_time = std::chrono::high_resolution_clock::now();
 	std::chrono::milliseconds dT = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - prev_calculate);
 
@@ -54,7 +54,7 @@ void Angles::calculate()
 	pitch_gyro_rate = ((double)gyroY / (32768.0f))*250.0f;
 //	double gyro_roll_rate = ((double)gyroZ / (32768.0f))*250.0f;
 
-	pitch = acc_term * (pitch + (pitch_gyro_rate * (dT.count() / 1000.0f)))+ ((1.0f - acc_term) * acc_pitch);
+	pitch = fc * (pitch + (pitch_gyro_rate * (dT.count() / 1000.0f)))+ ((1.0f - fc) * acc_pitch);
 //	roll = 0.98 * (roll + (gyro_roll_rate * (dT.count() / 1000.0f)))+ (0.02f * acc_roll);
 
 	prev_calculate = current_time;
