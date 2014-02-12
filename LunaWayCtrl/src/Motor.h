@@ -8,26 +8,24 @@
 #ifndef MOTOR_H_
 #define MOTOR_H_
 
-#include <thread>
 #include <mutex>
 #include "Encoder.h"
+#include "AbstractCyclicThread.h"
 
-class Motor
+class Motor : public AbstractCyclicThread
 {
 	public:
 		Motor( int dirpin, int pwmpin, int encoderpin, int freq );
 		virtual ~Motor();
-		void stop();
 		void setOutput( double value );
 		double getRPS();
 		double getOutput();
+		void stop();
 
 	private:
 		int _dirpin;
 		int _pwmpin;
-		void thread_cyclic();
-		std::thread thread;
-		volatile bool running;
+		void cyclic();
 		double output;
 		double _freq;
 		std::mutex output_mutex;

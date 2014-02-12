@@ -19,11 +19,11 @@ extern "C"
 #include <unistd.h>
 }
 
-Encoder::Encoder() : running( false )
+Encoder::Encoder()
 {
 }
 
-Encoder::Encoder( int pin ) : running( false )
+Encoder::Encoder( int pin )
 {
 	std::stringstream path;
 	path << "/sys/class/gpio/gpio" << pin << "/value";
@@ -33,10 +33,9 @@ Encoder::Encoder( int pin ) : running( false )
 		throw (std::string)"Failed to open: " + path.str();
 	pfd.events = POLLPRI;
 
-	running = true;
-	poll_thread = std::thread( &Encoder::threaded_poll, this );
-
 	int_delay_buf.clear();
+
+	start();
 }
 
 Encoder::~Encoder()
@@ -57,7 +56,7 @@ double Encoder::getRps()
 	return (1.0f / (avg_delay / int_delay_buf.size())) / PULSES_PER_REVOLUTION;
 }
 
-void Encoder::threaded_poll()
+void Encoder::cyclic()
 {
 	using std::chrono::high_resolution_clock;
 	using std::chrono::duration_cast;
@@ -81,7 +80,6 @@ void Encoder::threaded_poll()
 			int_delay_buf.clear();
 			continue;
 		}
-
 		//Interrupt occurred
 
 		//Have to perform a dummy read. Interrupt will be triggered otherwise.
@@ -101,14 +99,5 @@ void Encoder::threaded_poll()
 			int_delay_buf.erase( int_delay_buf.begin() );
 
 		last_int = now;
-	}
-}
-
-void Encoder::stop()
-{
-	if( running )
-	{
-		running = false;
-		poll_thread.join();
 	}
 }

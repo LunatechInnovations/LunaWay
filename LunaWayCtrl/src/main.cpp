@@ -134,8 +134,6 @@ int main()
 				rightMotor.setOutput( output );
 			}
 
-			cout << angles.getPitch() << '\t' << leftMotor.getOutput() << endl;
-
 #ifdef DEBUG
 			//Send debug values
 			stringstream sockdata;
@@ -145,6 +143,8 @@ int main()
 
 			this_thread::sleep_until( start_time + cycle_time );
 		}
+
+		//Join all threads
 #ifdef DEBUG
 		spc.stop();
 #endif

@@ -23,7 +23,6 @@ SegwayPlotterCom::SegwayPlotterCom()
 {
 	sock_fd = -1;
 	host_info_list = nullptr;
-	running = false;
 	_pid = nullptr;
 }
 
@@ -31,12 +30,10 @@ SegwayPlotterCom::SegwayPlotterCom( PID *pid ) : _pid( pid )
 {
 	sock_fd = -1;
 	host_info_list = nullptr;
-	running = false;
 }
 
 SegwayPlotterCom::~SegwayPlotterCom()
 {
-	stop();
 }
 
 bool SegwayPlotterCom::conn( std::string host, int port )
@@ -70,7 +67,7 @@ bool SegwayPlotterCom::conn( std::string host, int port )
 		return false;
 	}
 
-	recv_thread = std::thread( &SegwayPlotterCom::recv_cyclic, this );
+	start();
 
 	return true;
 }
@@ -80,25 +77,16 @@ bool SegwayPlotterCom::sendData( std::string data )
 	return send( sock_fd, (void *)data.c_str(), (int)data.size(), 0 ) != -1;
 }
 
-void SegwayPlotterCom::stop()
-{
-	if( running )
-	{
-		running = false;
-		recv_thread.join();
-	}
-}
 
-void SegwayPlotterCom::recv_cyclic()
+void SegwayPlotterCom::cyclic()
 {
 	//Set timeout for recv function
 	struct timeval recv_timeout;
-	recv_timeout.tv_sec =  5;
+	recv_timeout.tv_sec =  2;
 	recv_timeout.tv_usec = 0;
 
 	setsockopt( sock_fd, SOL_SOCKET, SO_RCVTIMEO, (void *)&recv_timeout, sizeof( struct timeval ) );
 
-	running = true;
 	while( running )
 	{
 		char rx[RECV_BUFFER_SIZE];

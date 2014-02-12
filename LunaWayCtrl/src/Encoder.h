@@ -8,8 +8,8 @@
 #ifndef ENCODER_H_
 #define ENCODER_H_
 
-#include <thread>
 #include <vector>
+#include "AbstractCyclicThread.h"
 
 extern "C"
 {
@@ -19,20 +19,17 @@ extern "C"
 #define MAX_INT_DELAY_BUF_ENTRIES 10
 #define PULSES_PER_REVOLUTION 15
 
-class Encoder
+class Encoder : public AbstractCyclicThread
 {
 	public:
 		Encoder();
 		Encoder( int pin );
 		virtual ~Encoder();
-		void stop();
 		double getRps();
 
 	private:
-		void threaded_poll();
+		void cyclic();
 		struct pollfd pfd;
-		std::thread poll_thread;
-		volatile bool running;
 		std::vector<double> int_delay_buf;
 };
 

@@ -9,8 +9,8 @@
 #define SEGWAYPLOTTERCOM_H_
 
 #include <string>
-#include <thread>
 #include "PID.h"
+#include "AbstractCyclicThread.h"
 
 extern "C"
 {
@@ -19,7 +19,7 @@ extern "C"
 #include <unistd.h>
 }
 
-class SegwayPlotterCom
+class SegwayPlotterCom : public AbstractCyclicThread
 {
 	public:
 		SegwayPlotterCom();
@@ -27,14 +27,11 @@ class SegwayPlotterCom
 		virtual ~SegwayPlotterCom();
 		bool conn( std::string host, int port );
 		bool sendData( std::string data );
-		void stop();
 
 	private:
 		struct addrinfo *host_info_list;
 		int sock_fd;
-		void recv_cyclic();
-		std::thread recv_thread;
-		volatile bool running;
+		void cyclic();
 		PID *_pid;
 		void setPID( std::string msg );
 };

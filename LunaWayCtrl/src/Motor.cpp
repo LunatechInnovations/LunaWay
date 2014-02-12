@@ -23,12 +23,11 @@ Motor::Motor( int dirpin, int pwmpin, int encoderpin, int freq )
 
 	encoder = new Encoder( encoderpin );
 
-	thread = std::thread( &Motor::thread_cyclic, this );
+	start();
 }
 
 Motor::~Motor()
 {
-	stop();
 	delete encoder;
 }
 
@@ -52,13 +51,11 @@ double Motor::getOutput()
 	return output;
 }
 
-void Motor::thread_cyclic()
+void Motor::cyclic()
 {
 	using std::chrono::high_resolution_clock;
 	using std::chrono::duration_cast;
 	double pwm_time = 1.0f / _freq;		//period time
-
-	running = true;
 
 	while( running )
 	{
@@ -94,12 +91,7 @@ void Motor::thread_cyclic()
 void Motor::stop()
 {
 	encoder->stop();
-
 	digitalWrite( _pwmpin, HIGH );
 
-	if( running )
-	{
-		running = false;
-		thread.join();
-	}
+	AbstractCyclicThread::stop();
 }

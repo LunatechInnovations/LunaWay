@@ -21,7 +21,7 @@ void AbstractCyclicThread::start()
 	if( !running )
 	{
 		running = true;
-		thread = std::thread( AbstractCyclicThread::hlp_cyclic, this );
+		thread = std::thread( &AbstractCyclicThread::hlp_cyclic, this );
 	}
 }
 
