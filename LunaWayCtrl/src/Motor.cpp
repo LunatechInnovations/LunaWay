@@ -12,7 +12,7 @@
 #include <iostream>
 
 using namespace std::chrono;
-Motor::Motor()
+Motor::Motor() : _dirpin( 0 ), _pwmpin( 0 ), output( 0.0f ), _freq( 0.0f ), encoder( nullptr )
 {
 }
 

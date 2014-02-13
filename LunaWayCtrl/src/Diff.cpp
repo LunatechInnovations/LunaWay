@@ -6,6 +6,7 @@
  */
 
 #include "Diff.h"
+#include <iostream>
 
 Diff::Diff( int l_pwm_pin, int l_dir_pin, int l_enc_pin, int r_pwm_pin,
 		    int r_dir_pin, int r_enc_pin, double freq, double p ) : _p( p )
@@ -49,6 +50,8 @@ void Diff::setOutput( double output )
 		cleft = output;
 		cright = output;
 	}
+
+	std::cout << cleft << '\t' << cright << std::endl;
 
 	leftMotor->setOutput( cleft );
 	rightMotor->setOutput( cright );
