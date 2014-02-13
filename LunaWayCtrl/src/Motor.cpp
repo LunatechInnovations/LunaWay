@@ -6,24 +6,25 @@
  */
 
 #include "Motor.h"
-#include <wiringPi.h>
 #include <chrono>
 #include <cmath>
 #include <iostream>
 
 using namespace std::chrono;
-Motor::Motor() : _dirpin( 0 ), _pwmpin( 0 ), output( 0.0f ), _freq( 0.0f ), encoder( nullptr )
+Motor::Motor() : outp_pwm( nullptr ), outp_dir( nullptr ), output( 0.0f ), _freq( 0.0f ), encoder( nullptr )
 {
 }
 
 Motor::Motor( int dirpin, int pwmpin, int encoderpin, int freq )
-	  : _dirpin( dirpin ), _pwmpin( pwmpin ), _freq( freq )
+	  : _freq( freq )
 {
 	output = 0.0f;
 	running = false;
 
-	pinMode( dirpin, OUTPUT );
-	pinMode( pwmpin, OUTPUT );
+	outp_pwm = new GPIO( pwmpin );
+	outp_pwm->setupDir( GPIO::Output );
+	outp_dir = new GPIO( dirpin );
+	outp_dir->setupDir( GPIO::Output );
 
 	encoder = new Encoder( encoderpin );
 
@@ -32,6 +33,8 @@ Motor::Motor( int dirpin, int pwmpin, int encoderpin, int freq )
 
 Motor::~Motor()
 {
+	delete outp_pwm;
+	delete outp_dir;
 	delete encoder;
 }
 
@@ -73,21 +76,24 @@ void Motor::cyclic()
 
 		if( tmp_outp == 0.0f )
 		{
-			digitalWrite( _pwmpin, HIGH );
+//			outp_pwm->setValue( true );
+			outp_pwm->setValue( false );
 			std::this_thread::sleep_for( total_us );
 			continue;
 		}
 
 		if( dir )
-			digitalWrite( _dirpin, HIGH );
+//			outp_dir->setValue( true );
+			outp_dir->setValue( false );
 		else
-			digitalWrite( _dirpin, LOW );
+			outp_dir->setValue( true );
+//			outp_dir->setValue( false );
 
 
-		digitalWrite( _pwmpin, LOW );
+		outp_pwm->setValue( false );
 		std::this_thread::sleep_for( off_us );
 
-		digitalWrite( _pwmpin, HIGH );
+		outp_pwm->setValue( true );
 		std::this_thread::sleep_for( total_us - off_us );
 	}
 }
@@ -95,7 +101,8 @@ void Motor::cyclic()
 void Motor::stop()
 {
 	encoder->stop();
-	digitalWrite( _pwmpin, HIGH );
+//	outp_pwm->setValue( true );
+	outp_pwm->setValue( false );
 
 	AbstractCyclicThread::stop();
 }

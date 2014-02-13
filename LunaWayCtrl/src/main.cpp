@@ -11,7 +11,6 @@
 
 #include <iostream>
 #include <vector>
-#include <wiringPi.h>
 #include "Switch.h"
 #include <iomanip>
 #include <cmath>
@@ -22,6 +21,7 @@
 #include <thread>
 #include <system_error>
 #include "Diff.h"
+#include "GPIO.h"
 
 #ifdef DEBUG
 #include "SegwayPlotterCom.h"
@@ -54,28 +54,12 @@ extern "C"
 #define PLOT_INTERVAL 20 / SAMPLE_TIME  //The interval of sending plot data. Time in n SAMPLE_TIME
 #endif
 
-/* Wiringpi	GPIO	Physical
- * 0		17		11		interrupt left encoder
- * 1		18		12
- * 2		21		13
- * 3		22		15
- * 4		23		16
- * 5		24		18
- * 6		25		22
- * 7		4		7		enable switch
- * 8		0		3
- * 9		11		23 		interrupt right encoder
- * 10		8		24		Dir left motor
- * 11		7		26		PWM left motor
- * 12		10		19		Dir right motor
- * 13		9		21		PWM right motor
- */
-#define LEFT_MOTOR_PWM_PIN 7
-#define LEFT_MOTOR_DIR_PIN 8
-#define RIGHT_MOTOR_PWM_PIN 9
-#define RIGHT_MOTOR_DIR_PIN 10
-#define ENABLE_SWITCH_PIN 4
-#define INTERRUPT_LEFT_ENCODER 17
+#define LEFT_MOTOR_PWM_PIN 		7
+#define LEFT_MOTOR_DIR_PIN 		8
+#define RIGHT_MOTOR_PWM_PIN 	9
+#define RIGHT_MOTOR_DIR_PIN 	10
+#define ENABLE_SWITCH_PIN 		4
+#define INTERRUPT_LEFT_ENCODER 	17
 #define INTERRUPT_RIGHT_ENCODER 11
 
 using namespace std;
@@ -93,6 +77,7 @@ volatile bool g_running = true;
 void signal_callback( int )
 {
 	g_running = false;
+	cout << endl;
 }
 
 /* main
@@ -106,10 +91,7 @@ int main()
 		openlog( "LunaWayCtrl", LOG_PID | LOG_CONS | LOG_NDELAY | LOG_PERROR, LOG_LOCAL1 );
 		syslog( LOG_INFO, "Application started" );
 
-		//TODO loose wiringpi dependency
-		if( wiringPiSetup() == -1 )
-			throw string( "Failed to setup wiringpi." );
-
+		//Setup signal callback
 		signal( SIGINT, signal_callback );
 		signal( SIGTERM, signal_callback );
 		milliseconds sample_time( SAMPLE_TIME );
@@ -121,6 +103,7 @@ int main()
 			throw string( "Failed to set scheduler." );
 
 		PID pid( START_P, START_I, START_D, START_SV, -START_IRANGE, START_IRANGE );
+
 
 #ifdef DEBUG
 		SegwayPlotterCom spc( &pid );
@@ -137,8 +120,11 @@ int main()
 		if( (mlockall( MCL_CURRENT|MCL_FUTURE )) == -1 )
 			throw string( "mlockall failed." );
 
-		Switch enableSwitch( 7 );
+		GPIO enableSwitch( ENABLE_SWITCH_PIN );
+		enableSwitch.setupDir( GPIO::Input );
+
 		Angles angles;
+
 
 		int reg_interval = 1;
 

@@ -11,6 +11,7 @@
 #include <mutex>
 #include "Encoder.h"
 #include "AbstractCyclicThread.h"
+#include "GPIO.h"
 
 class Motor : public AbstractCyclicThread
 {
@@ -24,8 +25,7 @@ class Motor : public AbstractCyclicThread
 		void stop();
 
 	private:
-		int _dirpin;
-		int _pwmpin;
+		GPIO *outp_pwm, *outp_dir;
 		void cyclic();
 		double output;
 		double _freq;
