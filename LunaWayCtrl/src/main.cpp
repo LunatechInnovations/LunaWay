@@ -36,18 +36,22 @@ extern "C"
 #include <syslog.h>
 }
 
-//sample time = reg interval = 20mS
 
-#define START_P 27.0f
-#define START_I 0.0f
-#define START_D 0.05f
-#define START_IRANGE 30
-#define START_SV 0.0f
-#define SAMPLE_TIME 20	//mS
-#define REG_INTERVAL 40 / SAMPLE_TIME
+/*Program parameters
+ *
+ */
+//sample time = reg interval = 20mS
+#define START_P 27.0f					//Start value for p gain in PID regulator
+#define START_I 0.0f					//Start value for i gain in PID regulator
+#define START_D 0.05f					//Start value for d gain in PID regulator
+#define START_IRANGE 30					//Min and max value for i state in PID regulator
+#define START_SV 0.0f					//Start set value
+#define SAMPLE_TIME 20					//The rate of which to fetch new angle values. Time in Ms
+#define REG_INTERVAL 40 / SAMPLE_TIME	//The interval of witch the regulator calculates new output. Time in n SAMPLE_TIME
+#define START_DIFF_P					//Start value for p gain in diff
 
 #ifdef DEBUG
-#define PLOT_INTERVAL 20 / SAMPLE_TIME
+#define PLOT_INTERVAL 20 / SAMPLE_TIME  //The interval of sending plot data. Time in n SAMPLE_TIME
 #endif
 
 /* Wiringpi	GPIO	Physical
@@ -70,13 +74,23 @@ extern "C"
 using namespace std;
 using namespace chrono;
 
+/* Global variables
+ *
+ */
 volatile bool g_running = true;
 
+/* signal_callback
+ * Attatched to SIGINT and SIGTERM
+ * Break main loop
+ */
 void signal_callback( int )
 {
 	g_running = false;
 }
 
+/* main
+ *
+ */
 int main()
 {
 	try
@@ -91,7 +105,7 @@ int main()
 
 		signal( SIGINT, signal_callback );
 		signal( SIGTERM, signal_callback );
-		milliseconds cycle_time( SAMPLE_TIME );
+		milliseconds sample_time( SAMPLE_TIME );
 
 		//Set scheduler priority
 		sched_param sp;
@@ -105,10 +119,12 @@ int main()
 		SegwayPlotterCom spc( &pid );
 		if( !spc.conn( "192.168.0.137", 5555 ) )
 			throw string( "Failed to connect" );
-		int plot_interval = 0;
+		int plot_interval = 1;
 #endif
 
-		Diff motor_diff;
+//	leftMotor = new Motor( 10, 11, 11, 500.0f );
+//	rightMotor = new Motor( 12, 13, 17, 500.0f );
+		Diff motors( 11, 10, 11, 13, 12, 17, 500.0f, START_DIFF_P );
 
 		//Don't swap memory. Start all threads before this.
 		if( (mlockall( MCL_CURRENT|MCL_FUTURE )) == -1 )
@@ -117,7 +133,7 @@ int main()
 		Switch enableSwitch( 7 );
 		Angles angles;
 
-		int reg_interval = 0;
+		int reg_interval = 1;
 
 		while( g_running )
 		{
@@ -129,19 +145,11 @@ int main()
 			}
 			else
 			{
-				/* cycle_time=20
-				 * p = 27.5
-				 * I = 0.0
-				 * gyro_rate * .1
-				 */
 				angles.calculate();
 				if( reg_interval >= REG_INTERVAL )
 				{
-					double output = pid.regulate( angles.getPitch(), angles.getPitchGyroRate() );
-
-					motor_diff.setOutput( output );
-
-					reg_interval = 0;
+					motors.setOutput( pid.regulate( angles.getPitch(), angles.getPitchGyroRate() ) );
+					reg_interval = 1;
 				}
 				else
 				{
@@ -154,10 +162,10 @@ int main()
 			if( plot_interval >= PLOT_INTERVAL )
 			{
 				stringstream sockdata;
-				sockdata << angles.getPitch() << ";" << motor_diff.getLeftMotorOutput() << ";" << endl;
+				sockdata << angles.getPitch() << ";" << motors.getLeftMotorOutput() << ";" << endl;
 				spc.sendData( sockdata.str() );
 
-				plot_interval = 0;
+				plot_interval = 1;
 			}
 			else
 			{
@@ -165,15 +173,18 @@ int main()
 			}
 #endif
 
-			this_thread::sleep_until( start_time + cycle_time );
+			this_thread::sleep_until( start_time + sample_time );
 		}
 
 		//Join all threads
 #ifdef DEBUG
 		spc.stop();
 #endif
-		motor_diff.stopMotors();
+		motors.stopMotors();
 	}
+	/* Handle exceptions
+	 *
+	 */
 	catch( const string &e )
 	{
 		syslog( LOG_ERR, e.c_str() );
@@ -196,6 +207,7 @@ int main()
 		return 3;
 	}
 
+	//Final log entry
 	syslog( LOG_INFO, "Application terminated" );
 	closelog();
 

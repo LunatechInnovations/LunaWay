@@ -7,20 +7,24 @@
 
 #include "Diff.h"
 
-Diff::Diff() : _p( 0.0f )
+Diff::Diff( int l_pwm_pin, int l_dir_pin, int l_enc_pin, int r_pwm_pin,
+		    int r_dir_pin, int r_enc_pin, double freq, double p ) : _p( p )
 {
-	Motor leftMotor( 10, 11, 11, 500.0f );
-	Motor rightMotor( 12, 13, 17, 500.0f );
+	leftMotor = new Motor( l_dir_pin, l_pwm_pin, l_enc_pin, freq );
+	rightMotor = new Motor( r_dir_pin, r_pwm_pin, r_enc_pin, freq );
+
 }
 
 Diff::~Diff()
 {
+	delete leftMotor;
+	delete rightMotor;
 }
 
 void Diff::setOutput( double output )
 {
 	double cleft, cright;
-	double dRps = leftMotor.getRPS() - rightMotor.getRPS();
+	double dRps = leftMotor->getRPS() - rightMotor->getRPS();
 
 	double p_term = dRps * _p;
 
@@ -46,22 +50,22 @@ void Diff::setOutput( double output )
 		cright = output;
 	}
 
-	leftMotor.setOutput( cleft );
-	rightMotor.setOutput( cright );
+	leftMotor->setOutput( cleft );
+	rightMotor->setOutput( cright );
 }
 
 double Diff::getLeftMotorOutput()
 {
-	return leftMotor.getOutput();
+	return leftMotor->getOutput();
 }
 
 double Diff::getRightMotorOutput()
 {
-	return rightMotor.getOutput();
+	return rightMotor->getOutput();
 }
 
 void Diff::stopMotors()
 {
-	leftMotor.stop();
-	rightMotor.stop();
+	leftMotor->stop();
+	rightMotor->stop();
 }

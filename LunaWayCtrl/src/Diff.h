@@ -13,7 +13,7 @@
 class Diff
 {
 	public:
-		Diff();
+		Diff( int l_pwm_pin, int l_dir_pin, int l_enc_pin, int r_pwm_pin, int r_dir_pin, int r_enc_pin, double freq, double p );
 		virtual ~Diff();
 		void setOutput( double output );
 		double getLeftMotorOutput();
@@ -21,8 +21,8 @@ class Diff
 		void stopMotors();
 
 	private:
-		Motor leftMotor;
-		Motor rightMotor;
+		Motor *leftMotor;
+		Motor *rightMotor;
 		double _p;
 };
 
