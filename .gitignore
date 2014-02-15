@@ -1,5 +1,6 @@
-/ld-segwayPlotter-Desktop-Debug
-/RemoteSystemsTempFiles
+/tests/GPIO_TEST
+/tests/xbox/src/test
 /.metadata
-/build-segwayPlotter-Desktop_4-Debug
+/FuncTest
+/RemoteSystemsTempFiles
 /build-segwayPlotter-Desktop-Debug
