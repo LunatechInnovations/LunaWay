@@ -2,7 +2,7 @@ CC	= /home/john/raspistuff/toolchain/tools/arm-bcm2708/gcc-linaro-arm-linux-gnue
 CFLAGS	= -Wall -std=c++11 -I/home/john/raspistuff/toolchain/rootfs_monstermash/rootfs/usr/local/include $(DEFINES)
 LDFLAGS = -L/home/john/raspistuff/toolchain/rootfs_monstermash/rootfs/usr/local/lib -lwiringPi
 DEFINES = -D_GLIBCXX_USE_NANOSLEEP=1
-ALLOBJS = main.o Encoder.o Motor.o Switch.o SegwayPlotterCom.o I2Cdev.o MPU6050.o Angles.o PID.o AbstractCyclicThread.o Diff.o GPIO.o
+ALLOBJS = main.o Encoder.o Motor.o SegwayPlotterCom.o I2Cdev.o MPU6050.o Angles.o PID.o AbstractCyclicThread.o GPIOPin.o GPIO.o Segway.o
 TARGET = LunaWayCtrl
 
 all: $(TARGET)
@@ -19,9 +19,6 @@ Encoder.o : src/Encoder.cpp
 Motor.o : src/Motor.cpp
 	$(CC) -c src/Motor.cpp $(CFLAGS)
 
-Switch.o : src/Switch.cpp
-	$(CC) -c src/Switch.cpp $(CFLAGS)
-	
 SegwayPlotterCom.o : src/SegwayPlotterCom.cpp
 	$(CC) -c src/SegwayPlotterCom.cpp $(CFLAGS)
 	
@@ -40,11 +37,14 @@ PID.o : src/PID.cpp
 AbstractCyclicThread.o : src/AbstractCyclicThread.cpp
 	$(CC) -c src/AbstractCyclicThread.cpp $(CFLAGS)
 	
-Diff.o : src/Diff.cpp
-	$(CC) -c src/Diff.cpp $(CFLAGS)
+GPIOPin.o : src/GPIOPin.cpp
+	$(CC) -c src/GPIOPin.cpp $(CFLAGS)
 	
 GPIO.o : src/GPIO.cpp
 	$(CC) -c src/GPIO.cpp $(CFLAGS)
+	
+Segway.o : src/Segway.cpp
+	$(CC) -c src/Segway.cpp $(CFLAGS)
 	
 clean: 
 	rm -f $(ALLOBJS) $(TARGET)

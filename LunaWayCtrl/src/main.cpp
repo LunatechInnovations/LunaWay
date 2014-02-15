@@ -11,7 +11,6 @@
 
 #include <iostream>
 #include <vector>
-#include "Switch.h"
 #include <iomanip>
 #include <cmath>
 #include <sstream>
@@ -20,8 +19,8 @@
 #include <chrono>
 #include <thread>
 #include <system_error>
-#include "Diff.h"
 #include "GPIO.h"
+#include "Segway.h"
 
 #ifdef DEBUG
 #include "SegwayPlotterCom.h"
@@ -104,6 +103,26 @@ int main()
 
 		PID pid( START_P, START_I, START_D, START_SV, -START_IRANGE, START_IRANGE );
 
+		//Create gpio object
+		GPIO *gpio = GPIO::Instance();
+
+		//Setup enable switch
+		GPIOPin *inpEnable = gpio->getPin( ENABLE_SWITCH_PIN );
+		inpEnable->setupInput();
+
+		//Setup motors (Pins will outputs inside Motor object)
+		Motor leftMotor( gpio->getPin( LEFT_MOTOR_PWM_PIN ),
+						 gpio->getPin( LEFT_MOTOR_DIR_PIN ),
+						 INTERRUPT_LEFT_ENCODER, 500 );
+		Motor rightMotor( gpio->getPin( RIGHT_MOTOR_PWM_PIN ),
+						  gpio->getPin( RIGHT_MOTOR_DIR_PIN ),
+						  INTERRUPT_RIGHT_ENCODER, 500 );
+
+		//Setup segway
+		Segway segway( &leftMotor, &rightMotor );
+
+		//Setup sensors
+		Angles angles;
 
 #ifdef DEBUG
 		SegwayPlotterCom spc( &pid );
@@ -112,19 +131,9 @@ int main()
 		int plot_interval = 1;
 #endif
 
-//	leftMotor = new Motor( 10, 11, 11, 500.0f );
-//	rightMotor = new Motor( 12, 13, 17, 500.0f );
-		Diff motors( 11, 10, 11, 13, 12, 17, 500.0f, START_DIFF_P );
-
 		//Don't swap memory. Start all threads before this.
 		if( (mlockall( MCL_CURRENT|MCL_FUTURE )) == -1 )
 			throw string( "mlockall failed." );
-
-		GPIO enableSwitch( ENABLE_SWITCH_PIN );
-		enableSwitch.setupDir( GPIO::Input );
-
-		Angles angles;
-
 
 		int reg_interval = 1;
 
@@ -132,14 +141,15 @@ int main()
 		{
 			high_resolution_clock::time_point start_time = high_resolution_clock::now();
 
-			if( !enableSwitch.getValue() )
-				motors.setOutput( 0.0f );
+			if( !inpEnable->getValue() )
+				segway.update( 0.0f, 0.0f );
 			else
 			{
 				angles.calculate();
 				if( reg_interval >= REG_INTERVAL )
 				{
-					motors.setOutput( pid.regulate( angles.getPitch(), angles.getPitchGyroRate() ) );
+					segway.update( pid.regulate( angles.getPitch(), angles.getPitchGyroRate() ),
+								   0.0f );
 					reg_interval = 1;
 				}
 				else
@@ -153,7 +163,7 @@ int main()
 			if( plot_interval >= PLOT_INTERVAL )
 			{
 				stringstream sockdata;
-				sockdata << angles.getPitch() << ";" << motors.getLeftMotorOutput() << ";" << endl;
+				sockdata << angles.getPitch() << ";" << segway.getLeftMotorOutput() << ";" << endl;
 				spc.sendData( sockdata.str() );
 
 				plot_interval = 1;
@@ -171,7 +181,7 @@ int main()
 #ifdef DEBUG
 		spc.stop();
 #endif
-		motors.stopMotors();
+		segway.stopMotors();
 	}
 	/* Handle exceptions
 	 *

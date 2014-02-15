@@ -1,100 +1,70 @@
 /*
  * GPIO.cpp
  *
- *  Created on: Feb 13, 2014
+ *  Created on: Feb 14, 2014
  *      Author: john
  */
 
 #include "GPIO.h"
-#include <iostream>
-#include <sstream>
-#include <fstream>
+#include <cstdlib>
+#include <string>
 
 extern "C"
 {
 #include <fcntl.h>
+#include <sys/mman.h>
 #include <unistd.h>
 }
 
+#define PAGE_SIZE (4*1024)
+#define BLOCK_SIZE (4*1024)
 
-GPIO::GPIO( int pin ) : _fd( -1 ), _pin( pin ), _dir( -1 )
+#define BCM2708_PERI_BASE 0x20000000
+#define GPIO_BASE (BCM2708_PERI_BASE + 0x00200000)
+
+#define MAX_GPIO_PIN 27
+
+GPIO *GPIO::m_pInstance = nullptr;
+
+GPIO* GPIO::Instance()
 {
-	std::ofstream export_file;
-	export_file.open( "/sys/class/gpio/export" );
-	export_file << _pin;
-	export_file.close();
+	if( m_pInstance == nullptr )
+		m_pInstance = new GPIO();
+
+	return m_pInstance;
 }
 
 GPIO::~GPIO()
 {
-	if( _fd > 0 )
-		close( _fd );
-
-	std::ofstream unexport_file;
-	unexport_file.open( "/sys/class/gpio/unexport" );
-	unexport_file << _pin;
-	unexport_file.close();
-}
-
-bool GPIO::getValue()
-{
-	char rx;
-
-	//Start reading from beginning of file
-	lseek( _fd, SEEK_SET, 0 );
-	size_t bytes_read = read( _fd, &rx, 1 );
-
-	if( bytes_read < 1 )
+	for( int i = 0; i <= MAX_GPIO_PIN; i++ )
 	{
-		std::stringstream e;
-		e << "Failed to read value.\n bytes_read=" << bytes_read;
-
-		throw e.str();
+		if( pins[i] != nullptr )
+			delete pins[i];
 	}
 
-	return rx == '1' ? true : false;
+	delete pins;
 }
 
-void GPIO::setupInterrupt( int edge )
+GPIOPin* GPIO::getPin( int pin )
 {
+	return pins[pin];
 }
 
-void GPIO::setValue( bool value )
+GPIO::GPIO()
 {
-	if( _dir == Input )
-		return;
+	int mem_fd = open( "/dev/mem", O_RDWR | O_SYNC );
+	if( mem_fd < 0 )
+		throw std::string( "Failed to open /dev/mem" );
 
-	char tx = value ? '1' : '0';
-	if( (write( _fd, (void *)&tx, 1 )) < 1 )
-		throw std::string( "Failed to write value." );
-}
+	void *gpio_map = (uint32_t *)mmap( nullptr, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, mem_fd, GPIO_BASE );
+	if( gpio_map == MAP_FAILED )
+		throw std::string( "mmap failed" );
 
-void GPIO::setupDir( int dir )
-{
-	std::ofstream dir_file;
-	std::stringstream dir_filename;
-	dir_filename << "/sys/class/gpio/gpio" << _pin << "/direction";
-	dir_file.open( dir_filename.str().c_str() );
+	close( mem_fd );
 
-	std::stringstream value_filename;
-	value_filename << "/sys/class/gpio/gpio" << _pin << "/value";
+	gpio = (volatile unsigned *)gpio_map;
 
-	if( dir == Input )
-	{
-		dir_file << "in";
-
-		if( (_fd = open( value_filename.str().c_str(), O_RDONLY )) < 0 )
-			throw std::string( "Failed to open value file for reading." );
-	}
-	else if( dir == Output )
-	{
-		dir_file << "out";
-
-		if( (_fd = open( value_filename.str().c_str(), O_RDWR )) < 0 )
-			throw std::string( "Failed to open value file for reading." );
-	}
-
-	_dir = dir;
-
-	dir_file.close();
+	pins = new GPIOPin*[MAX_GPIO_PIN + 1];
+	for( int i = 0; i <= MAX_GPIO_PIN; i++ )
+		pins[i] = new GPIOPin( i, gpio );
 }

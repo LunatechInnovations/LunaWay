@@ -11,13 +11,13 @@
 #include <mutex>
 #include "Encoder.h"
 #include "AbstractCyclicThread.h"
-#include "GPIO.h"
+#include "GPIOPin.h"
 
 class Motor : public AbstractCyclicThread
 {
 	public:
 		Motor();
-		Motor( int dirpin, int pwmpin, int encoderpin, int freq );
+		Motor( GPIOPin *dir = nullptr, GPIOPin *pwm = nullptr, int encoderpin = -1, int freq = 0 );
 		virtual ~Motor();
 		void setOutput( double value );
 		double getRPS();
@@ -25,7 +25,7 @@ class Motor : public AbstractCyclicThread
 		void stop();
 
 	private:
-		GPIO *outp_pwm, *outp_dir;
+		GPIOPin *_dir, *_pwm;
 		void cyclic();
 		double output;
 		double _freq;

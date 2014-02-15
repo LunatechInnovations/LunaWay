@@ -11,30 +11,24 @@
 #include <iostream>
 
 using namespace std::chrono;
-Motor::Motor() : outp_pwm( nullptr ), outp_dir( nullptr ), output( 0.0f ), _freq( 0.0f ), encoder( nullptr )
+
+Motor::Motor() : _dir( nullptr ), _pwm( nullptr ), output( 0.0f ), _freq( 0 ), encoder( nullptr )
 {
 }
 
-Motor::Motor( int dirpin, int pwmpin, int encoderpin, int freq )
-	  : _freq( freq )
+Motor::Motor( GPIOPin* dir, GPIOPin* pwm, int encoderpin, int freq ) : _dir( dir ), _pwm( pwm ), _freq( freq )
 {
 	output = 0.0f;
-	running = false;
-
-	outp_pwm = new GPIO( pwmpin );
-	outp_pwm->setupDir( GPIO::Output );
-	outp_dir = new GPIO( dirpin );
-	outp_dir->setupDir( GPIO::Output );
-
 	encoder = new Encoder( encoderpin );
+
+	_dir->setupOutput();
+	_pwm->setupOutput();
 
 	start();
 }
 
 Motor::~Motor()
 {
-	delete outp_pwm;
-	delete outp_dir;
 	delete encoder;
 }
 
@@ -55,6 +49,7 @@ double Motor::getRPS()
 
 double Motor::getOutput()
 {
+	std::lock_guard<std::mutex> lock( output_mutex );
 	return output;
 }
 
@@ -76,24 +71,21 @@ void Motor::cyclic()
 
 		if( tmp_outp == 0.0f )
 		{
-//			outp_pwm->setValue( true );
-			outp_pwm->setValue( false );
+			_pwm->setValue( false );
 			std::this_thread::sleep_for( total_us );
 			continue;
 		}
 
 		if( dir )
-//			outp_dir->setValue( true );
-			outp_dir->setValue( false );
+			_dir->setValue( false );
 		else
-			outp_dir->setValue( true );
-//			outp_dir->setValue( false );
+			_dir->setValue( true );
 
 
-		outp_pwm->setValue( false );
+		_pwm->setValue( false );
 		std::this_thread::sleep_for( off_us );
 
-		outp_pwm->setValue( true );
+		_pwm->setValue( true );
 		std::this_thread::sleep_for( total_us - off_us );
 	}
 }
@@ -101,8 +93,8 @@ void Motor::cyclic()
 void Motor::stop()
 {
 	encoder->stop();
-//	outp_pwm->setValue( true );
-	outp_pwm->setValue( false );
+	_pwm->setValue( false );
 
 	AbstractCyclicThread::stop();
 }
+
