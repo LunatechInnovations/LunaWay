@@ -122,14 +122,18 @@ bool is_valid_port( string str )
 int main( int argc, char ** argv )
 {
 	//Handle program arguments
-	if( argc < 3 )
+	if( argc < 4 )
 	{
-		cout << "Usage: RemoteGamepad [HOST] [PORT]" << endl;
+		cout << "Usage: RemoteGamepad [HOST] [PORT] [DEVICE]" << endl;
 		return EXIT_FAILURE;
 	}
 
 	string host = argv[1];
 	string port = argv[2];
+	stringstream conv;
+	int device;
+	conv << argv[3];
+	conv >> device;
 
 	//Validate hostname and port
 	if( host.size() <= 1 )
@@ -155,38 +159,47 @@ int main( int argc, char ** argv )
 		return EXIT_FAILURE;
 	}
 
-
 	int fail_counter = 0;
-	XBoxCtrl gamepad;
 
-	while( true )
+	try
 	{
-		ostringstream tx;
+		XBoxCtrl gamepad( device );
 
-		tx << gamepad.getJsLHorizontal() << ';' << gamepad.getJsLVertical() << '\n';
+		while( true )
+		{
+			ostringstream tx;
 
-		if( (send( g_sock_fd, (void *)tx.str().c_str(), tx.str().size(), 0 )) == -1 )
-		{
-			cerr << "Failed to send..." << endl;
-			fail_counter++;
-		}
-		else
-		{
-			fail_counter = 0;
-			this_thread::sleep_for( milliseconds( 100 ) );
+			tx << gamepad.getJsLHorizontal() << ';' << gamepad.getJsLVertical() << '\n';
+
+			if( (send( g_sock_fd, (void *)tx.str().c_str(), tx.str().size(), 0 )) == -1 )
+			{
+				cerr << "Failed to send..." << endl;
+				fail_counter++;
+			}
+			else
+			{
+				fail_counter = 0;
+				this_thread::sleep_for( milliseconds( 100 ) );
+			}
+
+			if( fail_counter >= N_RETRIES )
+			{
+				cerr << "Server has gone away." << endl;
+				break;
+			}
 		}
 
-		if( fail_counter >= N_RETRIES )
-		{
-			cerr << "Server has gone away." << endl;
-			break;
-		}
+	gamepad.stop();
+	}
+	catch( const string &e )
+	{
+		cerr << e << endl;
+		return EXIT_FAILURE;
 	}
 
 	//Cleanup
 	freeaddrinfo( g_host_info_list );
 	close( g_sock_fd );
-	gamepad.stop();
 
 	cout << "Exiting..." << endl;
 

@@ -6,8 +6,8 @@
 // Description : Hello World in C++, Ansi-style
 //============================================================================
 
-#define DEBUG
-//#undef DEBUG
+//#define DEBUG
+#undef DEBUG
 
 #include <iostream>
 #include <vector>
@@ -21,6 +21,7 @@
 #include <system_error>
 #include "GPIO.h"
 #include "Segway.h"
+#include "XBoxCtrlServer.h"
 
 #ifdef DEBUG
 #include "SegwayPlotterCom.h"
@@ -53,10 +54,10 @@ extern "C"
 #define PLOT_INTERVAL 20 / SAMPLE_TIME  //The interval of sending plot data. Time in n SAMPLE_TIME
 #endif
 
-#define LEFT_MOTOR_PWM_PIN 		7
-#define LEFT_MOTOR_DIR_PIN 		8
-#define RIGHT_MOTOR_PWM_PIN 	9
-#define RIGHT_MOTOR_DIR_PIN 	10
+#define LEFT_MOTOR_PWM_PIN 		8
+#define LEFT_MOTOR_DIR_PIN 		7
+#define RIGHT_MOTOR_PWM_PIN 	10
+#define RIGHT_MOTOR_DIR_PIN 	9
 #define ENABLE_SWITCH_PIN 		4
 #define INTERRUPT_LEFT_ENCODER 	17
 #define INTERRUPT_RIGHT_ENCODER 11
@@ -89,6 +90,10 @@ int main()
 		//Initiate system log
 		openlog( "LunaWayCtrl", LOG_PID | LOG_CONS | LOG_NDELAY | LOG_PERROR, LOG_LOCAL1 );
 		syslog( LOG_INFO, "Application started" );
+
+		//Make sure we are root
+		if( getuid() != 0 )
+			throw string( "You have to be root to play with the LunaWay." );
 
 		//Setup signal callback
 		signal( SIGINT, signal_callback );
@@ -123,6 +128,9 @@ int main()
 
 		//Setup sensors
 		Angles angles;
+
+		XBoxCtrlServer xcs( 5555 );
+		xcs.connect();
 
 #ifdef DEBUG
 		SegwayPlotterCom spc( &pid );

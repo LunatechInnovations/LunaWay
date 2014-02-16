@@ -29,7 +29,7 @@ class XBoxCtrl
 			uint8_t number;
 		}input_event_t;
 
-		XBoxCtrl();
+		XBoxCtrl( int device );
 		virtual ~XBoxCtrl();
 		void stop();
 		bool getButtA();

@@ -71,15 +71,15 @@ void Motor::cyclic()
 
 		if( tmp_outp == 0.0f )
 		{
-			_pwm->setValue( false );
+			_pwm->setValue( true );
 			std::this_thread::sleep_for( total_us );
 			continue;
 		}
 
 		if( dir )
-			_dir->setValue( false );
-		else
 			_dir->setValue( true );
+		else
+			_dir->setValue( false );
 
 
 		_pwm->setValue( false );
@@ -93,8 +93,11 @@ void Motor::cyclic()
 void Motor::stop()
 {
 	encoder->stop();
-	_pwm->setValue( false );
-
-	AbstractCyclicThread::stop();
+	if( running )
+	{
+		running = false;
+		thread.join();
+	}
+	_pwm->setValue( true );
 }
 

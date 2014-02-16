@@ -2,7 +2,7 @@ CC	= /home/john/raspistuff/toolchain/tools/arm-bcm2708/gcc-linaro-arm-linux-gnue
 CFLAGS	= -Wall -std=c++11 -I/home/john/raspistuff/toolchain/rootfs_monstermash/rootfs/usr/local/include $(DEFINES)
 LDFLAGS = -L/home/john/raspistuff/toolchain/rootfs_monstermash/rootfs/usr/local/lib -lwiringPi
 DEFINES = -D_GLIBCXX_USE_NANOSLEEP=1
-ALLOBJS = main.o Encoder.o Motor.o SegwayPlotterCom.o I2Cdev.o MPU6050.o Angles.o PID.o AbstractCyclicThread.o GPIOPin.o GPIO.o Segway.o
+ALLOBJS = main.o Encoder.o Motor.o SegwayPlotterCom.o I2Cdev.o MPU6050.o Angles.o PID.o AbstractCyclicThread.o GPIOPin.o GPIO.o Segway.o XBoxCtrlServer.o
 TARGET = LunaWayCtrl
 
 all: $(TARGET)
@@ -45,6 +45,9 @@ GPIO.o : src/GPIO.cpp
 	
 Segway.o : src/Segway.cpp
 	$(CC) -c src/Segway.cpp $(CFLAGS)
+	
+XBoxCtrlServer.o : src/XBoxCtrlServer.cpp
+	$(CC) -c src/XBoxCtrlServer.cpp $(CFLAGS)
 	
 clean: 
 	rm -f $(ALLOBJS) $(TARGET)

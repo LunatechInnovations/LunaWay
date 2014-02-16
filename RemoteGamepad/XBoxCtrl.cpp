@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <sstream>
 
 extern "C"
 {
@@ -39,11 +40,13 @@ extern "C"
 #define NUM_DP_HOR			0x06
 #define NUM_DP_VER			0x07
 
-XBoxCtrl::XBoxCtrl()
+XBoxCtrl::XBoxCtrl( int device )
 {
-	pfd.fd = open( "/dev/input/js0", O_RDONLY | O_NONBLOCK );
+	std::stringstream dev_path;
+	dev_path << "/dev/input/js" << device;
+	pfd.fd = open( dev_path.str().c_str(), O_RDONLY | O_NONBLOCK );
 	if( pfd.fd < 0 )
-		throw std::string( "Could not open /dev/input/js0 for reading." );
+		throw std::string( "Could not open " ) + dev_path.str() + std::string( " for reading." );
 	pfd.events = POLLPRI | POLLIN;
 	pfd.revents = 0;
 
@@ -88,6 +91,7 @@ void XBoxCtrl::stop()
 
 void XBoxCtrl::updateValue( uint8_t type, uint8_t number, int16_t value )
 {
+	std::cout << "Type: " << (unsigned int)type << " Number: " << (unsigned int)number << " Value: " << value << std::endl;
 	std::lock_guard<std::mutex> lock( event_mutex );
 	switch( type )
 	{
@@ -285,6 +289,7 @@ void XBoxCtrl::poll_dev()
 
 	while( running )
 	{
+		lseek( pfd.fd, 0, SEEK_SET );
 		ret = poll( &pfd, 1, 1000 );	//Dont poll for -1 since we need to be able to stop()
 		if( ret < 0 )		//Error
 			throw std::string( "poll failed." );
