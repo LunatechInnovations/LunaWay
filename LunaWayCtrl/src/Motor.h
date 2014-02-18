@@ -17,7 +17,7 @@ class Motor : public AbstractCyclicThread
 {
 	public:
 		Motor();
-		Motor( GPIOPin *dir = nullptr, GPIOPin *pwm = nullptr, int encoderpin = -1, int freq = 0 );
+		Motor( GPIOPin *dir = nullptr, GPIOPin *pwm = nullptr, GPIOPin *enc = nullptr, int freq = 0 );
 		virtual ~Motor();
 		void setOutput( double value );
 		double getRPS();

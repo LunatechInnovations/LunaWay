@@ -61,6 +61,7 @@ extern "C"
 #define ENABLE_SWITCH_PIN 		4
 #define INTERRUPT_LEFT_ENCODER 	11
 #define INTERRUPT_RIGHT_ENCODER 17
+#define MOTOR_PWM_FREQUENCY 	500
 
 using namespace std;
 using namespace chrono;
@@ -118,10 +119,12 @@ int main()
 		//Setup motors (Pins will outputs inside Motor object)
 		Motor leftMotor( gpio->getPin( LEFT_MOTOR_PWM_PIN ),
 						 gpio->getPin( LEFT_MOTOR_DIR_PIN ),
-						 INTERRUPT_LEFT_ENCODER, 500 );
+						 gpio->getPin( INTERRUPT_LEFT_ENCODER ),
+						 MOTOR_PWM_FREQUENCY );
 		Motor rightMotor( gpio->getPin( RIGHT_MOTOR_PWM_PIN ),
 						  gpio->getPin( RIGHT_MOTOR_DIR_PIN ),
-						  INTERRUPT_RIGHT_ENCODER, 500 );
+						  gpio->getPin( INTERRUPT_RIGHT_ENCODER ),
+						  MOTOR_PWM_FREQUENCY );
 
 		//Setup segway
 		Segway segway( &leftMotor, &rightMotor, START_DIFF_P );

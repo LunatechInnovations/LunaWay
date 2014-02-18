@@ -19,29 +19,23 @@ extern "C"
 #include <unistd.h>
 }
 
-Encoder::Encoder()
+Encoder::Encoder() : _pin( nullptr )
 {
 }
 
-Encoder::Encoder( int pin )
+Encoder::Encoder( GPIOPin *pin ) : _pin( pin )
 {
-	std::stringstream path;
-	path << "/sys/class/gpio/gpio" << pin << "/value";
+	if( _pin == nullptr )
+		throw std::string( "Pin is NULL" );
 
-	pfd.fd = open( path.str().c_str(), O_RDONLY );
-	if( pfd.fd < 0 )
-		throw (std::string)"Failed to open: " + path.str();
-	pfd.events = POLLPRI;
+	last_int = std::chrono::high_resolution_clock::now();
 
-	int_delay_buf.clear();
+	_pin->setupInterrupt( std::bind( &Encoder::count, this, false ), GPIOPin::Rising );
 
-	start();
 }
 
 Encoder::~Encoder()
 {
-	close( pfd.fd );
-	stop();
 }
 
 double Encoder::getRps()
@@ -56,48 +50,21 @@ double Encoder::getRps()
 	return (1.0f / (avg_delay / int_delay_buf.size())) / PULSES_PER_REVOLUTION;
 }
 
-void Encoder::cyclic()
+void Encoder::count( bool value )
 {
 	using std::chrono::high_resolution_clock;
 	using std::chrono::duration_cast;
 
-	char rdbuf[5];
-	int ret = -1;
-	high_resolution_clock::time_point last_int = high_resolution_clock::now();
+	high_resolution_clock::time_point now = high_resolution_clock::now();
+	int diff = duration_cast<std::chrono::microseconds>( now - last_int ).count();
+	if( diff < 0 )
+		return;
 
-	while( running )
-	{
-		memset( &rdbuf, 0, sizeof( rdbuf ) );
-		lseek( pfd.fd, 0, SEEK_SET );	//Place file descriptor at beginning of file
+	int_delay_buf.push_back( (double)((double)diff / 1000000.0f) );
 
-		ret = poll( &pfd, 1, 100 );	//Dont poll for -1 since we need to be able to stop()
-		if( ret < 0 )		//Error
-		{
-			throw std::string( "poll failed." );
-		}
-		else if( ret == 0 )	//Timeout
-		{
-			int_delay_buf.clear();
-			continue;
-		}
-		//Interrupt occurred
+	//Limit the buffer size
+	if( int_delay_buf.size() > MAX_INT_DELAY_BUF_ENTRIES )
+		int_delay_buf.erase( int_delay_buf.begin() );
 
-		//Have to perform a dummy read. Interrupt will be triggered otherwise.
-		uint8_t dummy;
-		ret = read( pfd.fd, &dummy, 1 );
-
-		//Add current delay time to buffer
-		high_resolution_clock::time_point now = high_resolution_clock::now();
-		int diff = duration_cast<std::chrono::microseconds>( now - last_int ).count();
-		if( diff < 0 )
-			continue;
-
-		int_delay_buf.push_back( (double)((double)diff / 1000000.0f) );
-
-		//Limit the buffer size
-		if( int_delay_buf.size() > MAX_INT_DELAY_BUF_ENTRIES )
-			int_delay_buf.erase( int_delay_buf.begin() );
-
-		last_int = now;
-	}
+	last_int = now;
 }

@@ -16,10 +16,10 @@ Motor::Motor() : _dir( nullptr ), _pwm( nullptr ), output( 0.0f ), _freq( 0 ), e
 {
 }
 
-Motor::Motor( GPIOPin* dir, GPIOPin* pwm, int encoderpin, int freq ) : _dir( dir ), _pwm( pwm ), _freq( freq )
+Motor::Motor( GPIOPin* dir, GPIOPin* pwm, GPIOPin *enc, int freq ) : _dir( dir ), _pwm( pwm ), _freq( freq )
 {
 	output = 0.0f;
-	encoder = new Encoder( encoderpin );
+	encoder = new Encoder( enc );
 
 	_dir->setupOutput();
 	_pwm->setupOutput();
@@ -92,7 +92,6 @@ void Motor::cyclic()
 
 void Motor::stop()
 {
-	encoder->stop();
 	if( running )
 	{
 		running = false;

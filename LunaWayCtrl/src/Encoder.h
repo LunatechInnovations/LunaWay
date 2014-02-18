@@ -9,7 +9,8 @@
 #define ENCODER_H_
 
 #include <vector>
-#include "AbstractCyclicThread.h"
+#include "GPIOPin.h"
+#include <chrono>
 
 extern "C"
 {
@@ -19,18 +20,19 @@ extern "C"
 #define MAX_INT_DELAY_BUF_ENTRIES 10
 #define PULSES_PER_REVOLUTION 15
 
-class Encoder : public AbstractCyclicThread
+class Encoder
 {
 	public:
 		Encoder();
-		Encoder( int pin );
+		Encoder( GPIOPin *pin );
 		virtual ~Encoder();
 		double getRps();
 
 	private:
-		void cyclic();
-		struct pollfd pfd;
 		std::vector<double> int_delay_buf;
+		void count( bool value );
+		GPIOPin *_pin;
+		std::chrono::high_resolution_clock::time_point last_int;
 };
 
 #endif /* ENCODER_H_ */
