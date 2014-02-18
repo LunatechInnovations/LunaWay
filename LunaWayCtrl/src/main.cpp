@@ -47,8 +47,8 @@ extern "C"
 #define START_IRANGE 30					//Min and max value for i state in PID regulator
 #define START_SV 0.0f					//Start set value
 #define SAMPLE_TIME 20					//The rate of which to fetch new angle values. Time in Ms
-#define REG_INTERVAL 40 / SAMPLE_TIME	//The interval of witch the regulator calculates new output. Time in n SAMPLE_TIME
-#define START_DIFF_P 2					//Start value for p gain in diff
+#define REG_INTERVAL 20 / SAMPLE_TIME	//The interval of witch the regulator calculates new output. Time in n SAMPLE_TIME
+#define START_DIFF_P 3					//Start value for p gain in diff
 
 #ifdef DEBUG
 #define PLOT_INTERVAL 20 / SAMPLE_TIME  //The interval of sending plot data. Time in n SAMPLE_TIME
@@ -59,8 +59,8 @@ extern "C"
 #define RIGHT_MOTOR_PWM_PIN 	10
 #define RIGHT_MOTOR_DIR_PIN 	9
 #define ENABLE_SWITCH_PIN 		4
-#define INTERRUPT_LEFT_ENCODER 	17
-#define INTERRUPT_RIGHT_ENCODER 11
+#define INTERRUPT_LEFT_ENCODER 	11
+#define INTERRUPT_RIGHT_ENCODER 17
 
 using namespace std;
 using namespace chrono;
@@ -124,12 +124,12 @@ int main()
 						  INTERRUPT_RIGHT_ENCODER, 500 );
 
 		//Setup segway
-		Segway segway( &leftMotor, &rightMotor );
+		Segway segway( &leftMotor, &rightMotor, START_DIFF_P );
 
 		//Setup sensors
 		Angles angles;
 
-		XBoxCtrlServer xcs( 5555 );
+		XBoxCtrlServer xcs( 2345 );
 		xcs.connect();
 
 #ifdef DEBUG
@@ -156,8 +156,9 @@ int main()
 				angles.calculate();
 				if( reg_interval >= REG_INTERVAL )
 				{
+					pid.setSV( START_SV - (xcs.getVertical() * 0.05f) );
 					segway.update( pid.regulate( angles.getPitch(), angles.getPitchGyroRate() ),
-								   0.0f );
+								   xcs.getHorizontal() );
 					reg_interval = 1;
 				}
 				else

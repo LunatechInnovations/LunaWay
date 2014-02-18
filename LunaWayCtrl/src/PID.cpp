@@ -101,3 +101,8 @@ void PID::setSV( double sv )
 	_sv = sv;
 	sv_mutex.unlock();
 }
+
+double PID::getSV()
+{
+	return _sv;
+}

@@ -8,6 +8,7 @@
 #include "XBoxCtrlServer.h"
 #include <iostream>
 #include <cstring>
+#include <sstream>
 
 extern "C"
 {
@@ -66,7 +67,28 @@ void XBoxCtrlServer::cyclic()
 		}
 
 		std::string data( rx );
-		std::cout << data << std::endl;
+		std::string hor, ver, curr;
+
+		for( auto i : data )
+		{
+			if( i == ';' )
+			{
+				hor = curr;
+				curr.clear();
+			}
+			else
+			{
+				curr.push_back( i );
+			}
+		}
+		ver = curr;
+
+		std::stringstream conv;
+		conv << hor;
+		conv >> horizontal;
+		conv.clear();
+		conv << ver;
+		conv >> vertical;
 	}
 }
 
@@ -79,7 +101,10 @@ void XBoxCtrlServer::connect()
 	host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
 	host_info.ai_flags = AI_PASSIVE;     // IP Wildcard
 
-	if( (getaddrinfo( nullptr, "5555", &host_info, &host_info_list )) != 0 )
+	std::stringstream port_conv;
+	port_conv << _port;
+
+	if( (getaddrinfo( nullptr, port_conv.str().c_str(), &host_info, &host_info_list )) != 0 )
 		throw std::string( "getaddrinfo failed." );
 
 	//Create socket

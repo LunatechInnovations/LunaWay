@@ -25,6 +25,7 @@ class PID
 		void setMinIState( double min );
 		void setIStateLimits( double min, double max );
 		double regulate( double pv, double gyro_rate );
+		double getSV();
 
 	private:
 		double _p, _i, _d, _sv;

@@ -94,6 +94,8 @@ void GPIOPin::setupInterrupt( std::function<void(bool)> callback, int edge )
 		throw std::string( "Failed to open: " ) + gpio_path.str();
 	pfd.events = POLLPRI;
 
+	interrupt_callback = callback;
+
 	running = true;
 	cyclic_thread = std::thread( &GPIOPin::cyclic, this );
 }

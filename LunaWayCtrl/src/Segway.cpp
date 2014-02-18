@@ -24,61 +24,83 @@ Segway::~Segway()
 
 void Segway::update( double output, double steering )
 {
+	if( output > 100.0f )
+		output = 100.0f;
+	else if( output < -100.0f )
+		output = -100.0f;
+
+	static int tmp = 0;
+
 	double cleft = output;
 	double cright = output;
-	double dRps = _leftMotor->getRPS() - _rightMotor->getRPS();
 
+	double lrps = _leftMotor->getRPS();
+	double rrps = _rightMotor->getRPS();
+
+	//Differential
+	double dRps = rrps - lrps + steering * 0.2f;
 	double p_term = dRps * _p;
 
+	if( output > 0.0f && dRps >= 0.0f ) 		//Moving forward, rightMotor slow
+	{
+		cright += p_term;
+		cleft -= p_term;
 
-//	if( p_term > output )
-//	{
-//		cleft = output * 2.0f;
-//		cright = 0.0f;
-//	}
-//	else if( p_term < output && p_term > 0.0f )
-//	{
-//		cleft = output + p_term;
-//		cright = output - p_term;
-//	}
-//	else if( p_term < output && p_term < 0.0f )
-//	{
-//		cleft = 0.0f;
-//		cright = output * 2.0f;
-//	}
-//	else
-//	{
-//		cleft = output;
-//		cright = output;
-//	}
+		if( cright > 100.0f )
+		{
+			cleft -= (cright - 100.0f);
+			cright -= (cright - 100.0f);
+		}
+	}
+	else if( output > 0.0f && dRps < 0.0f )		//Moving forward, leftMotor slow
+	{
+		cleft -= p_term;
+		cright += p_term;
 
-//	if( output > 0.0f && p_term < 0.0f )
-//	{
-//		cleft += p_term;
-//		cright -= p_term;
-//	}
-//	else if( output > 0.0f && p_term > 0.0f )
-//	{
-//		cleft -= p_term;
-//		cright += p_term;
-//	}
-//	else if( output < 0.0f && p_term < 0.0f )
-//	{
-//		cleft -= p_term;
-//		cright += p_term;
-//	}
-//	else if( output < 0.0f && p_term > 0.0f )
-//	{
-//		cleft += p_term;
-//		cright -= p_term;
-//	}
+		if( cleft > 100.0f )
+		{
+			cright -= (cleft - 100.0f);
+			cleft -= (cleft - 100.0f);
+		}
+	}
+	else if( output < 0.0f && dRps >= 0.0f )	//Moving back, rightMotor slow
+	{
+		cright -= p_term;
+		cleft += p_term;
 
-//	std::cout << "L: " << std::setw( 7 ) << cleft
-//			  << " R: " << std::setw( 7 ) << cright
-//			  << " p_term: " << std::setw( 7 ) << p_term << std::endl;
+		if( cright < -100.0f )
+		{
+			cleft -= (cright + 100.0f);
+			cright -= (cright + 100.0f);
+		}
+	}
+	else if( output < 0.0f && dRps < 0.0f )		//Moving back, leftMotor slow
+	{
+		cright -= p_term;
+		cleft += p_term;
+
+		if( cleft < -100.0f )
+		{
+			cright -= (cleft + 100.0f);
+			cleft -= (cleft + 100.0f);
+		}
+	}
+
 
 	_leftMotor->setOutput( cleft );
 	_rightMotor->setOutput( cright );
+
+	if( tmp == 8 )
+	{
+		std::cout << "L: " << std::setw( 7 ) << cleft
+				  << " R: " << std::setw( 7 ) << cright
+				  << " p_term: " << std::setw( 7 ) << p_term << std::endl;
+		tmp = 0;
+	}
+	else
+	{
+		tmp++;
+	}
 }
 
 void Segway::stopMotors()
