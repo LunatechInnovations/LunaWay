@@ -29,27 +29,44 @@ extern "C"
 #include <unistd.h>
 }
 
+/*! \fn XBoxCtrlServer::XBoxCtrlServer( uint16_t port )
+ * \brief Constructor
+ * @param[in] port Port to open for communication with client
+ */
 XBoxCtrlServer::XBoxCtrlServer( uint16_t port )
 			  : _port( port ), vertical( 0.0f ), horizontal( 0.0f ), fd( -1 ), cli_fd( -1 ), host_info_list( nullptr )
 {
 }
 
+/*! \fn XBoxCtrlServer::~XBoxCtrlServer()
+ * \brief Destructor
+ */
 XBoxCtrlServer::~XBoxCtrlServer()
 {
 }
 
+/*! \fn XBoxCtrlServer::getVertical()
+ * \brief getter for Vertical joystick axis
+ */
 double XBoxCtrlServer::getVertical()
 {
 	std::lock_guard<std::mutex> lock( vertical_mutex );
 	return vertical;
 }
 
+/*! \fn XBoxCtrlServer::getHorizontal()
+ * \brief getter for Horizontal joystick axis
+ */
 double XBoxCtrlServer::getHorizontal()
 {
 	std::lock_guard<std::mutex> lock( horizontal_mutex );
 	return horizontal;
 }
 
+/*! \fn XBoxCtrlServer::cyclic()
+ * \brief Listen for connections and receive data.
+ * \details This is the implementation of AbstractCyclicThreads pure virtual function
+ */
 void XBoxCtrlServer::cyclic()
 {
 	std::cout << "Listen()ing for connections..."  << std::endl;
@@ -104,6 +121,9 @@ void XBoxCtrlServer::cyclic()
 	}
 }
 
+/*! \fn XBoxCtrlServer::connect()
+ * \brief Setup connection
+ */
 void XBoxCtrlServer::connect()
 {
 	struct addrinfo host_info;

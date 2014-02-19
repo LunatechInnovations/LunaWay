@@ -41,10 +41,19 @@ extern "C"
 #define GPIO_LEV *(_gpio+13) // pin level
 
 
+/*! \fn GPIOPin::GPIOPin( int pin, volatile unsigned *gpio )
+ * \brief Constructor
+ * @param[in] pin GPIO pin number
+ * @param[in] gpio Pointer to memory initialized in GPIO object
+ */
 GPIOPin::GPIOPin( int pin, volatile unsigned *gpio ) : _gpio( gpio ), _mode( Unassigned ), _pin( pin )
 {
 }
 
+/*! \fn GPIOPin::~GPIOPin()
+ * \brief Destructor
+ * \details Close open files and unexport interupt pin
+ */
 GPIOPin::~GPIOPin()
 {
 	if( _mode == Interrupt )
@@ -56,6 +65,9 @@ GPIOPin::~GPIOPin()
 	}
 }
 
+/*! \fn void GPIOPin::setupInput()
+ * \brief Configure this pin as a digital input
+ */
 void GPIOPin::setupInput()
 {
 	if( _mode != Unassigned )
@@ -65,6 +77,9 @@ void GPIOPin::setupInput()
 	INP_GPIO( _pin );
 }
 
+/*! \fn void GPIOPin::setupOutput()
+ * \brief Configure this pin as a digital output
+ */
 void GPIOPin::setupOutput()
 {
 	if( _mode != Unassigned )
@@ -75,6 +90,11 @@ void GPIOPin::setupOutput()
 	OUT_GPIO( _pin );
 }
 
+/*! \fn GPIOPin::setupInterrupt( std::function<void(bool)> callback, int edge )
+ * \brief Configure this pin as an interrupt pin.
+ * @param[in] callback The callback function to be called on interrupt occurance
+ * @param[in] edge The edge on wich the interrupt will occur. Use GPIOPin::Edges.
+ */
 void GPIOPin::setupInterrupt( std::function<void(bool)> callback, int edge )
 {
 	if( _mode != Unassigned )
@@ -113,6 +133,10 @@ void GPIOPin::setupInterrupt( std::function<void(bool)> callback, int edge )
 	start();
 }
 
+/*! \fn void GPIOPin::setValue( bool value )
+ * \brief Setter for output value
+ * @param[in] value New value for output pin
+ */
 void GPIOPin::setValue( bool value )
 {
 	if( _mode == Output )
@@ -128,6 +152,10 @@ void GPIOPin::setValue( bool value )
 	}
 }
 
+/*! \fn bool GPIOPin::getValue()
+ * \brief Getter for input/output pin value
+ * \return Pin value
+ */
 bool GPIOPin::getValue()
 {
 	if( _mode == Unassigned )
@@ -137,6 +165,10 @@ bool GPIOPin::getValue()
 	return ((value & (1 << _pin)) != 0);
 }
 
+/*! \fn void GPIOPin::cyclic()
+ * \brief Threaded multi purpose function
+ * \details Interrupt pin: calls poll_interrupt()
+ */
 void GPIOPin::cyclic()
 {
 	if( _mode == Interrupt )
@@ -145,6 +177,9 @@ void GPIOPin::cyclic()
 		std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
 }
 
+/*! \fn void GPIOPin::poll_interrupt()
+ * \brief calls poll() on the exported pins value file
+ */
 void GPIOPin::poll_interrupt()
 {
 	try

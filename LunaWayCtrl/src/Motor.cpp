@@ -24,21 +24,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 using namespace std::chrono;
 
-/** Motor
- *
- * Generic constructor
+/*! \fn Motor::Motor()
+ * \brief Constructor
  */
 Motor::Motor() : _dir( nullptr ), _pwm( nullptr ), output( 0.0f ), _freq( 0 ), encoder( nullptr )
 {
 }
 
-/** Motor
- *
- * Default constructor
- * @param dir GPIO pin to control the motor direction
- * @param pwm GPIO pin for pulse width modulation of motor
- * @param enc GPIO pin for encoder interrupt
- * @param freq Frequency of pulse width modulation
+ /*! \fn Motor::Motor( GPIOPin* dir, GPIOPin* pwm, GPIOPin *enc, int freq )
+ * \brief Default constructor
+ * @param[in] dir GPIO pin to control the motor direction
+ * @param[in] pwm GPIO pin for pulse width modulation of motor
+ * @param[in] enc GPIO pin for encoder interrupt
+ * @param[in] freq Frequency of pulse width modulation
  */
 Motor::Motor( GPIOPin* dir, GPIOPin* pwm, GPIOPin *enc, int freq ) : _dir( dir ), _pwm( pwm ), _freq( freq )
 {
@@ -51,19 +49,17 @@ Motor::Motor( GPIOPin* dir, GPIOPin* pwm, GPIOPin *enc, int freq ) : _dir( dir )
 	start();
 }
 
-/** ~Motor
- *
- * Generic destructor
+/*! \fn Motor::~Motor
+ * \brief Generic destructor
  */
 Motor::~Motor()
 {
 	delete encoder;
 }
 
-/** setOutput
- *
- * Setter for motor output
- * @param value -100 - 100% output
+/*! \fn Motor::setOutput( double value )
+ * \brief Setter for motor output
+ * @param[in] value -100 - 100% output
  */
 void Motor::setOutput( double value )
 {
@@ -75,18 +71,16 @@ void Motor::setOutput( double value )
 	output_mutex.unlock();
 }
 
-/** getRPS
- *
- * returns revolutions per secound from encoder
+/*! \fn Motor::getRPS()
+ * \brief Returns revolutions per secound from encoder
  */
 double Motor::getRPS()
 {
 	return encoder->getRps();
 }
 
-/** getOutput
- *
- * returns the current motor output in %
+/*! \fn Motor::getOutput()
+ * \brief Getter for motor output
  */
 double Motor::getOutput()
 {
@@ -94,9 +88,9 @@ double Motor::getOutput()
 	return output;
 }
 
-/** cyclic
- *
- * Implementation of AbstractCyclicThread's pure virtual function
+/*! \fn Motor::cyclic()
+ * \brief Handle pwm
+ * \details Implementation of AbstractCyclicThread's pure virtual function\n
  * This threaded function handles the pulse width modulation to motor
  */
 void Motor::cyclic()
@@ -139,10 +133,9 @@ void Motor::cyclic()
 	}
 }
 
-/** stop
- *
- * Overloading of AbstractCyclics stop function
- * This is neccesary because we want to turn of motor.
+/*! \fn Motor::stop()
+ * \brief Overloading of AbstractCyclics stop function
+ * \details This is neccesary because we want to turn of motor.
  */
 void Motor::stop()
 {

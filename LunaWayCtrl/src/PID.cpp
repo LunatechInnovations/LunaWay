@@ -20,24 +20,50 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #include "PID.h"
 #include <iostream>
 
+/*! \fn PID::PID()
+ * \brief Generic constructor
+ */
 PID::PID() : _p( 0.0f ), _i( 0.0f ), _d( 0.0f ), _sv( 0.0f ), _istate( 0.0f ), _istate_max( 250.0f ), _istate_min( -250.0f )
 {
 }
 
+/*! \fn PID::PID( double p, double i, double d, double sv )
+ * \brief Constructor with regulator parameters and set value
+ * @param[in] p P-gain
+ * @param[in] i I-gain
+ * @param[in] d D-gain
+ * @param[in] sv Set value
+ */
 PID::PID( double p, double i, double d, double sv )
 	: _p( p ), _i( i ), _d( d ), _sv( sv ), _istate( 0.0f ), _istate_max( 250.0f ), _istate_min( -250.0f )
 {
 }
 
+/*! \fn PID::PID( double p, double i, double d, double sv, double i_state_min, double i_state_max )
+ * \brief Constructor with regulator parameters, set value and istate limits
+ * @param[in] p P-gain
+ * @param[in] i I-gain
+ * @param[in] d D-gain
+ * @param[in] sv Set value
+ * @param[in] i_state_min Minimum value for istate
+ * @param[in] i_state_max Maximum value for istate
+ */
 PID::PID( double p, double i, double d, double sv, double i_state_min, double i_state_max )
     : _p( p ), _i( i ), _d( d ), _sv( sv ), _istate( 0.0f ), _istate_max( i_state_max ), _istate_min( i_state_min )
 {
 }
 
+/*! \fn PID::~PID()
+ * \brief Destructor
+ */
 PID::~PID()
 {
 }
 
+/*! \fn PID::setP( double p )
+ * \brief Setter for P-gain
+ * @param[in] p New P-gain
+ */
 void PID::setP( double p )
 {
 	p_mutex.lock();
@@ -45,6 +71,10 @@ void PID::setP( double p )
 	p_mutex.unlock();
 }
 
+/*! \fn PID::setI( double i )
+ * \brief Setter for I-gain
+ * @param[in] i New I-gain
+ */
 void PID::setI( double i )
 {
 	i_mutex.lock();
@@ -52,6 +82,10 @@ void PID::setI( double i )
 	i_mutex.unlock();
 }
 
+/*! \fn PID::setD( double d )
+ * \brief Setter for D-gain
+ * @param[in] d New D-gain
+ */
 void PID::setD( double d )
 {
 	d_mutex.lock();
@@ -59,22 +93,40 @@ void PID::setD( double d )
 	d_mutex.unlock();
 }
 
+/*! \fn PID::setMaxIState( double max )
+ * \brief Setter for maximum istate value
+ * @param[in] max New max value
+ */
 void PID::setMaxIState( double max )
 {
 	_istate_max = max;
 }
 
+/*! \fn PID::setMinIState( double min )
+ * \brief Setter for minimum istate value
+ * @param[in] min New min value
+ */
 void PID::setMinIState( double min )
 {
 	_istate_min = min;
 }
 
+/*! \fn PID::setIStateLimits( double min, double max )
+ * \brief Setter for both maximum and minimum istate values
+ * @param[in] min New min value
+ * @param[in] max New max value
+ */
 void PID::setIStateLimits( double min, double max )
 {
 	_istate_max = max;
 	_istate_min = min;
 }
 
+/*! \fn PID::regulate( double pv, double gyro_rate )
+ * \brief Calculate new ouput
+ * @param[in] pv Current process value
+ * @param[in] gyro_rate Gyro rate from sensor. Used for derivative term
+ */
 double PID::regulate( double pv, double gyro_rate )
 {
 	sv_mutex.lock();
@@ -107,6 +159,10 @@ double PID::regulate( double pv, double gyro_rate )
 	return output;
 }
 
+/*! \fn PID::setSV( double sv )
+ * \brief Setter for set value
+ * @param[in] sv New set value
+ */
 void PID::setSV( double sv )
 {
 	sv_mutex.lock();
@@ -114,6 +170,9 @@ void PID::setSV( double sv )
 	sv_mutex.unlock();
 }
 
+/*! \fn PID::getSV()
+ * \brief Getter for set value
+ */
 double PID::getSV()
 {
 	return _sv;

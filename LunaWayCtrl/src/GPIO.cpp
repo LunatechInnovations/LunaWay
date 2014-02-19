@@ -38,6 +38,10 @@ extern "C"
 
 GPIO *GPIO::m_pInstance = nullptr;
 
+/*! \fn GPIO* GPIO::Instance()
+ * \brief This function creates and returns a pointer to the one and only instance of GPIO.
+ * \return Pointer to GPIO instance
+ */
 GPIO* GPIO::Instance()
 {
 	if( m_pInstance == nullptr )
@@ -46,6 +50,10 @@ GPIO* GPIO::Instance()
 	return m_pInstance;
 }
 
+/*! \fn GPIO::~GPIO()
+ * \brief Destructor
+ * \details Free memory
+ */
 GPIO::~GPIO()
 {
 	for( int i = 0; i <= MAX_GPIO_PIN; i++ )
@@ -57,11 +65,21 @@ GPIO::~GPIO()
 	delete pins;
 }
 
+/*! \fn GPIOPin* GPIO::getPin( int pin )
+ * \brief Getter for the pins
+ * @param[in] pin The pin number to return
+ * \return A GPIOPin pointer
+ */
 GPIOPin* GPIO::getPin( int pin )
 {
 	return pins[pin];
 }
 
+/*! \fn GPIO::GPIO()
+ * \brief Constructor
+ * \details Constructor is private.\n
+ * This is done to prevent users from creating more than one instance.
+ */
 GPIO::GPIO()
 {
 	int mem_fd = open( "/dev/mem", O_RDWR | O_SYNC );

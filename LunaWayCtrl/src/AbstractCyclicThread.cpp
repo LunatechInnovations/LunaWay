@@ -37,9 +37,8 @@ AbstractCyclicThread::~AbstractCyclicThread()
 	stop();
 }
 
-/** start
- *
- * Start the tread.
+/*! \fn AbstractCyclicThread::start()
+ * \brief Start the thread
  */
 void AbstractCyclicThread::start()
 {
@@ -50,9 +49,8 @@ void AbstractCyclicThread::start()
 	}
 }
 
-/** stop
- *
- * Stop and join the tread.
+/*! \fn AbstractCyclicThread::stop()
+ * \brief Stop and join the tread.
  */
 void AbstractCyclicThread::stop()
 {
@@ -63,9 +61,8 @@ void AbstractCyclicThread::stop()
 	}
 }
 
-/** hlp_cyclic
- *
- * Keep executing cyclic as long as running is true
+/*! \fn AbstractCyclicThread::hlp_cyclic()
+ * \brief Keep executing cyclic as long as running is true
  */
 void AbstractCyclicThread::hlp_cyclic()
 {
