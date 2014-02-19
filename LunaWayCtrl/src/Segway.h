@@ -22,6 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 #include "Motor.h"
 
+/*! \class Segway
+ * \brief This class is responsible for distributing the PID regulator output to the motors.\n
+ * \details It also handles steering
+ */
 class Segway
 {
 	public:

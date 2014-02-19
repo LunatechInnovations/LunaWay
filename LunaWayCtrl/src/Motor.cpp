@@ -24,10 +24,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 using namespace std::chrono;
 
+/** Motor
+ *
+ * Generic constructor
+ */
 Motor::Motor() : _dir( nullptr ), _pwm( nullptr ), output( 0.0f ), _freq( 0 ), encoder( nullptr )
 {
 }
 
+/** Motor
+ *
+ * Default constructor
+ * @param dir GPIO pin to control the motor direction
+ * @param pwm GPIO pin for pulse width modulation of motor
+ * @param enc GPIO pin for encoder interrupt
+ * @param freq Frequency of pulse width modulation
+ */
 Motor::Motor( GPIOPin* dir, GPIOPin* pwm, GPIOPin *enc, int freq ) : _dir( dir ), _pwm( pwm ), _freq( freq )
 {
 	output = 0.0f;
@@ -39,11 +51,20 @@ Motor::Motor( GPIOPin* dir, GPIOPin* pwm, GPIOPin *enc, int freq ) : _dir( dir )
 	start();
 }
 
+/** ~Motor
+ *
+ * Generic destructor
+ */
 Motor::~Motor()
 {
 	delete encoder;
 }
 
+/** setOutput
+ *
+ * Setter for motor output
+ * @param value -100 - 100% output
+ */
 void Motor::setOutput( double value )
 {
 	if( value < -100.0f || value > 100.0f )
@@ -54,17 +75,30 @@ void Motor::setOutput( double value )
 	output_mutex.unlock();
 }
 
+/** getRPS
+ *
+ * returns revolutions per secound from encoder
+ */
 double Motor::getRPS()
 {
 	return encoder->getRps();
 }
 
+/** getOutput
+ *
+ * returns the current motor output in %
+ */
 double Motor::getOutput()
 {
 	std::lock_guard<std::mutex> lock( output_mutex );
 	return output;
 }
 
+/** cyclic
+ *
+ * Implementation of AbstractCyclicThread's pure virtual function
+ * This threaded function handles the pulse width modulation to motor
+ */
 void Motor::cyclic()
 {
 	using std::chrono::high_resolution_clock;
@@ -78,9 +112,10 @@ void Motor::cyclic()
 		bool dir = output > 0.0f;
 		output_mutex.unlock();
 
-		microseconds off_us( (int)(pwm_time * (tmp_outp / 100.0f) * 1000000.0f) );
-		microseconds total_us( (int)(pwm_time * 1000000.0f) );
+		microseconds off_us( (int)(pwm_time * (tmp_outp / 100.0f) * 1000000.0f) );	//Motor off time
+		microseconds total_us( (int)(pwm_time * 1000000.0f) ); 						//Total cycle time
 
+		//Don't PWM when output = 0%
 		if( tmp_outp == 0.0f )
 		{
 			_pwm->setValue( true );
@@ -88,12 +123,14 @@ void Motor::cyclic()
 			continue;
 		}
 
+		//Set motor direction
 		if( dir )
 			_dir->setValue( true );
 		else
 			_dir->setValue( false );
 
 
+		//Switch pwm output and sleep
 		_pwm->setValue( false );
 		std::this_thread::sleep_for( off_us );
 
@@ -102,6 +139,11 @@ void Motor::cyclic()
 	}
 }
 
+/** stop
+ *
+ * Overloading of AbstractCyclics stop function
+ * This is neccesary because we want to turn of motor.
+ */
 void Motor::stop()
 {
 	if( running )

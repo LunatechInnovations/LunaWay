@@ -6,10 +6,13 @@ DEFINES = -D_GLIBCXX_USE_NANOSLEEP=1
 ALLOBJS = main.o Encoder.o Motor.o SegwayPlotterCom.o I2Cdev.o MPU6050.o Angles.o PID.o AbstractCyclicThread.o GPIOPin.o GPIO.o Segway.o XBoxCtrlServer.o
 TARGET = LunaWayCtrl
 
+doc:
+	doxygen Doxyfile
+	
 all: $(TARGET)
 
 pi: $(TARGET)
-
+	
 $(TARGET) : $(ALLOBJS)
 	$(CC) $(ALLOBJS) -o $(TARGET) $(CFLAGS) $(LDFLAGS)
 
@@ -54,3 +57,4 @@ XBoxCtrlServer.o : src/XBoxCtrlServer.cpp
 	
 clean: 
 	rm -f $(ALLOBJS) $(TARGET)
+	rm -rf doxygen-output

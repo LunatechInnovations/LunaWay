@@ -22,6 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 #include <thread>
 
+/*! \class AbstractCyclicThread
+ * \brief This class provides an abstract baseclass for a cyclic threaded function.\n
+ * \details The pure virtual function cyclic will be called repeatedly after start has been called
+ */
 class AbstractCyclicThread
 {
 	public:

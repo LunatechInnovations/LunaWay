@@ -31,8 +31,10 @@ extern "C"
 #include <poll.h>
 }
 
-/** Encoder
- *
+/*! \class Encoder
+ * \brief Motor encoder.
+ * \details A 1-phase Motor encoder.\n
+ * Implements a GPIOPin interrupt.
  */
 class Encoder
 {

@@ -19,15 +19,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 #include "AbstractCyclicThread.h"
 
+/** AbstractCyclicThread
+ *
+ * Constructor
+ */
 AbstractCyclicThread::AbstractCyclicThread() : running( false )
 {
 }
 
+/** ~AbstractCyclicThread
+ *
+ * Destructor.
+ * Stop and join the thread.
+ */
 AbstractCyclicThread::~AbstractCyclicThread()
 {
 	stop();
 }
 
+/** start
+ *
+ * Start the tread.
+ */
 void AbstractCyclicThread::start()
 {
 	if( !running )
@@ -37,6 +50,10 @@ void AbstractCyclicThread::start()
 	}
 }
 
+/** stop
+ *
+ * Stop and join the tread.
+ */
 void AbstractCyclicThread::stop()
 {
 	if( running )
@@ -46,6 +63,10 @@ void AbstractCyclicThread::stop()
 	}
 }
 
+/** hlp_cyclic
+ *
+ * Keep executing cyclic as long as running is true
+ */
 void AbstractCyclicThread::hlp_cyclic()
 {
 	while( running )

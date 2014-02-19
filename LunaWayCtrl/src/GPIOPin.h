@@ -30,6 +30,10 @@ extern "C"
 #include <poll.h>
 }
 
+/*! \class GPIOPin
+ * \brief An interface for the Raspberry Pi's GPIO pins.
+ * \details No instances should be created from outside the singleton class GPIO. Use GPIO::getPin().
+ */
 class GPIOPin : public AbstractCyclicThread
 {
 		enum PinModes

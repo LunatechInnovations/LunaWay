@@ -27,6 +27,9 @@ extern "C"
 #include <inttypes.h>
 }
 
+/*! \class GPIO
+ * \brief Singleton class to manage GPIO pins of the Raspberry Pi
+ */
 class GPIO
 {
 	public:

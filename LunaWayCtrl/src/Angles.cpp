@@ -22,13 +22,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #include <string>
 #include <iostream>
 
-
+/** Angles
+ *
+ * Default constructor
+ */
 Angles::Angles()
 {
 	sensors = MPU6050( 0x69 );
 	pitch = 0.0f;
 	roll = 0.0f;
-	debug = 0.0f;
 	pitch_gyro_rate = 0.0f;
 
 	prev_calculate = std::chrono::high_resolution_clock::now();
@@ -39,10 +41,19 @@ Angles::Angles()
 		throw std::string( "MPU6050 connection failed" );
 }
 
+/** ~Angles
+ *
+ * Generic destructor
+ */
 Angles::~Angles()
 {
 }
 
+/** calculate
+ *
+ * Fetch raw sensor data from MPU6050.
+ * Calculate angle and angular rate.
+ */
 void Angles::calculate()
 {
 	int16_t accX, accY, accZ, gyroX, gyroY, gyroZ;
@@ -61,8 +72,6 @@ void Angles::calculate()
 	acc_pitch = (acc_pitch * (180.0f / M_PI ) );
 	acc_roll = (acc_roll * (180.0f / M_PI ) );
 
-	debug = acc_pitch;
-
 	pitch_gyro_rate = ((double)gyroY / (32768.0f))*250.0f;
 //	double gyro_roll_rate = ((double)gyroZ / (32768.0f))*250.0f;
 
@@ -72,21 +81,28 @@ void Angles::calculate()
 	prev_calculate = current_time;
 }
 
+/** getPitch
+ *
+ * getter for pitch angle
+ */
 double Angles::getPitch()
 {
 	return pitch;
 }
 
+/** getRoll
+ *
+ * getter for roll angle
+ */
 double Angles::getRoll()
 {
 	return roll;
 }
 
-double Angles::getDebug()
-{
-	return debug;
-}
-
+/** getPitchGyroRate
+ *
+ * getter for pitch rate
+ */
 double Angles::getPitchGyroRate()
 {
 	return pitch_gyro_rate;

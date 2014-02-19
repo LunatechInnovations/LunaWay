@@ -30,6 +30,9 @@ extern "C"
 #include <unistd.h>
 }
 
+/*! \class SegwayPlotterCom
+ * \brief Provides a client for the QT application: segwayPlotter
+ */
 class SegwayPlotterCom : public AbstractCyclicThread
 {
 	public:

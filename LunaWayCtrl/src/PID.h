@@ -22,6 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 #include <mutex>
 
+/*! \class PID
+ * \brief A basic PID regulator.\n
+ * \details Uses the gyro rate for derivative term
+ */
 class PID
 {
 	public:

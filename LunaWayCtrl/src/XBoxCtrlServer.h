@@ -28,6 +28,9 @@ extern "C"
 #include <inttypes.h>
 }
 
+/*! \class XBoxCtrlServer
+ * \brief Provides a server to receive data from an XBox360 controller over TCP/IP
+ */
 class XBoxCtrlServer : public AbstractCyclicThread
 {
 	public:

@@ -82,7 +82,7 @@ using namespace chrono;
  */
 volatile bool g_running = true;
 
-/* signal_callback
+/** signal_callback
  * Attatched to SIGINT and SIGTERM
  * Break main loop
  */
@@ -92,7 +92,7 @@ void signal_callback( int )
 	cout << endl;
 }
 
-/* main
+/** main
  *
  */
 int main()
@@ -118,6 +118,7 @@ int main()
 		if( sched_setscheduler( 0, SCHED_FIFO, &sp ) == -1 )
 			throw string( "Failed to set scheduler." );
 
+		//Create PID regulator.
 		PID pid( START_P, START_I, START_D, START_SV, -START_IRANGE, START_IRANGE );
 
 		//Create gpio object
@@ -127,7 +128,7 @@ int main()
 		GPIOPin *inpEnable = gpio->getPin( ENABLE_SWITCH_PIN );
 		inpEnable->setupInput();
 
-		//Setup motors (Pins will outputs inside Motor object)
+		//Setup motors (Pins will become outputs inside Motor object)
 		Motor leftMotor( gpio->getPin( LEFT_MOTOR_PWM_PIN ),
 						 gpio->getPin( LEFT_MOTOR_DIR_PIN ),
 						 gpio->getPin( INTERRUPT_LEFT_ENCODER ),
@@ -137,12 +138,13 @@ int main()
 						  gpio->getPin( INTERRUPT_RIGHT_ENCODER ),
 						  MOTOR_PWM_FREQUENCY );
 
-		//Setup segway
+		//Setup segway object. - This is were PID output will be distributed over the motors
 		Segway segway( &leftMotor, &rightMotor, START_DIFF_P );
 
 		//Setup sensors
 		Angles angles;
 
+		//Listen for gamepad on port 2345
 		XBoxCtrlServer xcs( 2345 );
 		xcs.connect();
 
@@ -157,17 +159,19 @@ int main()
 		if( (mlockall( MCL_CURRENT|MCL_FUTURE )) == -1 )
 			throw string( "mlockall failed." );
 
+		//Counter. How many times do we sample the sensors between pid updates.
 		int reg_interval = 1;
 
 		while( g_running )
 		{
+			//Keep track of cycle time
 			high_resolution_clock::time_point start_time = high_resolution_clock::now();
 
-			if( !inpEnable->getValue() )
+			if( !inpEnable->getValue() ) //Check enable switch
 				segway.update( 0.0f, 0.0f );
 			else
 			{
-				angles.calculate();
+				angles.calculate();	//Fetch angle samples
 				if( reg_interval >= REG_INTERVAL )
 				{
 					pid.setSV( START_SV - (xcs.getVertical() * 0.05f) );
