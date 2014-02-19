@@ -29,6 +29,7 @@ extern "C"
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <syslog.h>
 }
 
 #define INP_GPIO(g) *(_gpio+((g)/10)) &= ~(7<<(((g)%10)*3))
@@ -37,10 +38,10 @@ extern "C"
 
 #define GPIO_SET *(_gpio+7)  // sets   bits which are 1 ignores bits which are 0
 #define GPIO_CLR *(_gpio+10) // clears bits which are 1 ignores bits which are 0
-#define GPIO_LEV *(_gpio+13)                  // pin level
+#define GPIO_LEV *(_gpio+13) // pin level
 
 
-GPIOPin::GPIOPin( int pin, volatile unsigned *gpio ) : _gpio( gpio ), _mode( Unassigned ), _pin( pin ), running( false )
+GPIOPin::GPIOPin( int pin, volatile unsigned *gpio ) : _gpio( gpio ), _mode( Unassigned ), _pin( pin )
 {
 }
 
@@ -109,8 +110,7 @@ void GPIOPin::setupInterrupt( std::function<void(bool)> callback, int edge )
 
 	interrupt_callback = callback;
 
-	running = true;
-	cyclic_thread = std::thread( &GPIOPin::cyclic, this );
+	start();
 }
 
 void GPIOPin::setValue( bool value )
@@ -171,13 +171,19 @@ void GPIOPin::poll_interrupt()
 			ret = read( pfd.fd, &rx, 1 );
 
 			//Execute callback function
-//			interrupt_callback( rx == '1' ? true : false );
-			interrupt_callback( true );
+			interrupt_callback( rx == '1' ? true : false );
 		}
 	}
-	catch( std::bad_function_call &e )
+	catch( const std::bad_function_call &e )
 	{
-		std::cerr << "Bad function call: " << e.what() << std::endl;
+		std::string msg = std::string( "Bad function call. " ) + std::string( e.what() ) +
+						  std::string( "\nDid you forget to implement interrupt_callback?" );
+		syslog( LOG_ERR, msg.c_str() );
+	}
+	catch( const std::string &e )
+	{
+		std::string msg = e + std::string( "\nThread exiting" );
+		syslog( LOG_ERR, msg.c_str() );
 	}
 
 	running = false;

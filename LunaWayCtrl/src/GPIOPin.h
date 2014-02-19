@@ -23,13 +23,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #include <mutex>
 #include <thread>
 #include <functional>
+#include "AbstractCyclicThread.h"
 
 extern "C"
 {
 #include <poll.h>
 }
 
-class GPIOPin
+class GPIOPin : public AbstractCyclicThread
 {
 		enum PinModes
 		{
@@ -60,9 +61,6 @@ class GPIOPin
 		std::mutex mem_mutex;
 		struct pollfd pfd;	//Interrupt pollrequest
 		std::function<void(bool)> interrupt_callback;
-		volatile bool running;
-		std::thread cyclic_thread;
-
 };
 
 #endif /* GPIOPIN_H_ */

@@ -21,17 +21,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #define ENCODER_H_
 
 #include <vector>
-#include "GPIOPin.h"
 #include <chrono>
+#include <mutex>
+
+#include "GPIOPin.h"
 
 extern "C"
 {
 #include <poll.h>
 }
 
-#define MAX_INT_DELAY_BUF_ENTRIES 10
-#define PULSES_PER_REVOLUTION 15
-
+/** Encoder
+ *
+ */
 class Encoder
 {
 	public:
@@ -45,6 +47,8 @@ class Encoder
 		void count( bool value );
 		GPIOPin *_pin;
 		std::chrono::high_resolution_clock::time_point last_int;
+		bool _int_value;
+		std::mutex int_delay_buf_mutex;
 };
 
 #endif /* ENCODER_H_ */
