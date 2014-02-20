@@ -1,7 +1,9 @@
 CC	= /home/john/raspistuff/toolchain/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-g++
+#CC = /home/john/raspistuff/toolchain/tools/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/bin/arm-bcm2708hardfp-linux-gnueabi-g++
+#CC =/home/john/raspistuff/toolchain/tools/arm-bcm2708/arm-bcm2708-linux-gnueabi/bin/arm-bcm2708-linux-gnueabi-g++
 pi:	CC = g++-4.7
-CFLAGS	= -Wall -std=c++11 -I/home/john/raspistuff/toolchain/rootfs_monstermash/rootfs/usr/local/include $(DEFINES)
-LDFLAGS = -L/home/john/raspistuff/toolchain/rootfs_monstermash/rootfs/usr/local/lib -lpthread
+CFLAGS	= -Wall -O -std=c++11 $(DEFINES)
+LDFLAGS = -lpthread
 DEFINES = -D_GLIBCXX_USE_NANOSLEEP=1
 ALLOBJS = main.o Encoder.o Motor.o SegwayPlotterCom.o I2Cdev.o MPU6050.o Angles.o PID.o AbstractCyclicThread.o GPIOPin.o GPIO.o Segway.o XBoxCtrlServer.o
 TARGET = LunaWayCtrl

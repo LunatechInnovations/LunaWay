@@ -102,6 +102,8 @@ void Segway::update( double output, double steering )
 	_leftMotor->setOutput( cleft );
 	_rightMotor->setOutput( cright );
 
+	std::cout << _leftMotor->getRPS() << std::endl;
+
 	if( tmp == 8 )
 	{
 		std::cout << "L: " << std::setw( 7 ) << cleft

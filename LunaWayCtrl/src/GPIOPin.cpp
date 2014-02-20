@@ -48,6 +48,8 @@ extern "C"
  */
 GPIOPin::GPIOPin( int pin, volatile unsigned *gpio ) : _gpio( gpio ), _mode( Unassigned ), _pin( pin )
 {
+	interrupt_callback = nullptr;
+	timeout_callback = nullptr;
 }
 
 /*! \fn GPIOPin::~GPIOPin()
@@ -90,12 +92,12 @@ void GPIOPin::setupOutput()
 	OUT_GPIO( _pin );
 }
 
-/*! \fn GPIOPin::setupInterrupt( std::function<void(bool)> callback, int edge )
+/*! \fn GPIOPin::setupInterrupt( std::function<void(bool)> int_callback, int edge )
  * \brief Configure this pin as an interrupt pin.
  * @param[in] callback The callback function to be called on interrupt occurance
  * @param[in] edge The edge on wich the interrupt will occur. Use GPIOPin::Edges.
  */
-void GPIOPin::setupInterrupt( std::function<void(bool)> callback, int edge )
+void GPIOPin::setupInterrupt( std::function<void(bool)> int_callback, int edge )
 {
 	if( _mode != Unassigned )
 		throw std::string( "setupInterrupt called on already assigned pin" );
@@ -128,9 +130,19 @@ void GPIOPin::setupInterrupt( std::function<void(bool)> callback, int edge )
 		throw std::string( "Failed to open: " ) + gpio_path.str();
 	pfd.events = POLLPRI;
 
-	interrupt_callback = callback;
+	interrupt_callback = int_callback;
 
 	start();
+}
+
+/*! \fn void GPIOPin::setupInterrupt( std::function<void(bool)> int_callback, std::function<void(void)> timeo_callback, int edge )
+ * \brief Overloaded setupInterrupt.
+ * \details Implement timeout function
+ */
+void GPIOPin::setupInterrupt( std::function<void(bool)> int_callback, std::function<void()> timeo_callback, int edge )
+{
+	timeout_callback = timeo_callback;
+	setupInterrupt( int_callback, edge );
 }
 
 /*! \fn void GPIOPin::setValue( bool value )
@@ -196,9 +208,16 @@ void GPIOPin::poll_interrupt()
 
 			ret = poll( &pfd, 1, 100 );	//Dont poll for -1 since we need to be able to stop()
 			if( ret < 0 )		//Error
+			{
 				throw std::string( "poll failed." );
+			}
 			else if( ret == 0 )	//Timeout
+			{
+				if( timeout_callback )
+					timeout_callback();
+
 				continue;
+			}
 
 			//Interrupt occurred
 			//Read pin value
@@ -206,7 +225,8 @@ void GPIOPin::poll_interrupt()
 			ret = read( pfd.fd, &rx, 1 );
 
 			//Execute callback function
-			interrupt_callback( rx == '1' ? true : false );
+			if( interrupt_callback )
+				interrupt_callback( rx == '1' ? true : false );
 		}
 	}
 	catch( const std::bad_function_call &e )
@@ -219,6 +239,10 @@ void GPIOPin::poll_interrupt()
 	{
 		std::string msg = e + std::string( "\nThread exiting" );
 		syslog( LOG_ERR, msg.c_str() );
+	}
+	catch( ... )
+	{
+		syslog( LOG_ERR, "Undefined error in interrupt thread." );
 	}
 
 	running = false;

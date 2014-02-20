@@ -103,7 +103,7 @@ int main()
 
 		//Make sure we are root
 		if( getuid() != 0 )
-			throw string( "You have to be root to play with the LunaWay." );
+			throw string( "You have to be root to play with the LunaWay!" );
 
 		//Setup signal callback
 		signal( SIGINT, signal_callback );

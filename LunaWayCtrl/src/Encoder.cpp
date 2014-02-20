@@ -53,8 +53,9 @@ Encoder::Encoder( GPIOPin *pin ) : _pin( pin ), _int_value( false )
 
 	last_int = std::chrono::high_resolution_clock::now();
 
-	_pin->setupInterrupt( std::bind( &Encoder::count, this, false ), GPIOPin::Rising );
-
+	_pin->setupInterrupt( std::bind( &Encoder::count, this, false ),
+						  std::bind( &Encoder::poll_timeout, this ),
+						  GPIOPin::Rising );
 }
 
 /*! \fn Encoder::~Encoder()
@@ -99,7 +100,6 @@ void Encoder::count( bool value )
 	//Lock mutex
 	std::lock_guard<std::mutex> lock( int_delay_buf_mutex );
 
-	//TODO clear buffer
 	//Add delay to filtering buffer
 	int_delay_buf.push_back( (double)((double)diff / 1000000.0f) );
 
@@ -108,4 +108,13 @@ void Encoder::count( bool value )
 		int_delay_buf.erase( int_delay_buf.begin() );
 
 	last_int = now;
+}
+
+/*! \fn void Encoder::poll_timeout()
+ * \brief Timeout function connected to interrupt pin
+ * \details Clear buffer
+ */
+void Encoder::poll_timeout()
+{
+	int_delay_buf.clear();
 }

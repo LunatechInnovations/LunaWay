@@ -51,7 +51,8 @@ class GPIOPin : public AbstractCyclicThread
 		virtual ~GPIOPin();
 		void setupInput();
 		void setupOutput();
-		void setupInterrupt( std::function<void(bool)> callback, int edge );
+		void setupInterrupt( std::function<void(bool)> int_callback, int edge );
+		void setupInterrupt( std::function<void(bool)> int_callback, std::function<void()> timeo_callback, int edge );
 		void setValue( bool value );
 		bool getValue();
 
@@ -65,6 +66,7 @@ class GPIOPin : public AbstractCyclicThread
 		std::mutex mem_mutex;
 		struct pollfd pfd;	//Interrupt pollrequest
 		std::function<void(bool)> interrupt_callback;
+		std::function<void(void)> timeout_callback;
 };
 
 #endif /* GPIOPIN_H_ */

@@ -47,6 +47,7 @@ class Encoder
 	private:
 		std::vector<double> int_delay_buf;
 		void count( bool value );
+		void poll_timeout();
 		GPIOPin *_pin;
 		std::chrono::high_resolution_clock::time_point last_int;
 		bool _int_value;
