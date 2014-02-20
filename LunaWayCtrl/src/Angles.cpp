@@ -22,9 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #include <string>
 #include <iostream>
 
-/** Angles
- *
- * Default constructor
+/*! \fn Angles::Angles()
+ * \brief Default constructor
  */
 Angles::Angles()
 {
@@ -40,19 +39,16 @@ Angles::Angles()
 	if( !sensors.testConnection() )
 		throw std::string( "MPU6050 connection failed" );
 }
-
-/** ~Angles
- *
- * Generic destructor
+/*! \fn Angles::~Angles()
+ * \brief Generic destructor
  */
 Angles::~Angles()
 {
 }
 
-/** calculate
- *
- * Fetch raw sensor data from MPU6050.
- * Calculate angle and angular rate.
+/*! \fn void Angles::calculate()
+ * \brief Calculate angle and angular rate.
+ * \details Fetch raw sensor data from MPU6050 then calculate pitch and roll.
  */
 void Angles::calculate()
 {
@@ -81,27 +77,27 @@ void Angles::calculate()
 	prev_calculate = current_time;
 }
 
-/** getPitch
- *
- * getter for pitch angle
+/*! \fn double Angles::getPitch()
+ * \brief Getter for pitch angle
+ * \return Pitch angle in degrees.
  */
 double Angles::getPitch()
 {
 	return pitch;
 }
 
-/** getRoll
- *
- * getter for roll angle
+/*! \fn double Angles::getRoll()
+ * \brief Getter for roll angle
+ * \return Roll angle in degrees.
  */
 double Angles::getRoll()
 {
 	return roll;
 }
 
-/** getPitchGyroRate
- *
- * getter for pitch rate
+/* \fn double Angles::getPitchGyroRate()
+ * \brief Getter for pitch rate
+ * \return Pitch gyro rate in degrees per secound
  */
 double Angles::getPitchGyroRate()
 {

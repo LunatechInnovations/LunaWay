@@ -54,6 +54,11 @@ extern "C"
 #include <inttypes.h>
 }
 
+/*! \class I2Cdev
+ * \brief Main I2C device class
+ * \details I2Cdev library collection.\n
+ * Abstracts bit and byte I2C R/W functions into a convenient class
+ */
 class I2Cdev {
     public:
         I2Cdev();

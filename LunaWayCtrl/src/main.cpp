@@ -82,8 +82,9 @@ using namespace chrono;
  */
 volatile bool g_running = true;
 
-/** signal_callback
- * Attatched to SIGINT and SIGTERM
+/*! \fn void signal_callback( int )
+ * \brief Signal callback
+ * \details Attatched to SIGINT and SIGTERM
  * Break main loop
  */
 void signal_callback( int )
@@ -92,9 +93,6 @@ void signal_callback( int )
 	cout << endl;
 }
 
-/** main
- *
- */
 int main()
 {
 	try

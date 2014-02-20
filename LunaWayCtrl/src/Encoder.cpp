@@ -35,18 +35,18 @@ extern "C"
 #define MAX_INT_DELAY_BUF_ENTRIES 10
 #define PULSES_PER_REVOLUTION 15
 
-/** Encoder
- * Generic constructor
+/*! \fn Encoder::Encoder()
+ * \brief Generic constructor
  */
 Encoder::Encoder() : _pin( nullptr ), _int_value( false )
 {
 }
 
-/** Encoder
- * Default constructor
- * @param pin GPIO pin for encoder interrupt
+/*! \fn Encoder::Encoder( GPIOPin *pin )
+ * \brief Default constructor
+ * @param[in] pin GPIO pin for encoder interrupt
  */
-Encoder::Encoder( GPIOPin *pin ) : _pin( pin )
+Encoder::Encoder( GPIOPin *pin ) : _pin( pin ), _int_value( false )
 {
 	if( _pin == nullptr )
 		throw std::string( "Pin is NULL" );
@@ -57,15 +57,16 @@ Encoder::Encoder( GPIOPin *pin ) : _pin( pin )
 
 }
 
-/** ~Encoder
- * Generic destructor
+/*! \fn Encoder::~Encoder()
+ * \brief Generic destructor
  */
 Encoder::~Encoder()
 {
 }
 
-/** getRps
- * Returns a filtered revolutions per secound value
+/*! \fn double Encoder::getRps()
+ * \brief Calculate revolutions per second
+ * \return A filtered revolutions per second value
  */
 double Encoder::getRps()
 {
@@ -81,9 +82,9 @@ double Encoder::getRps()
 	return (1.0f / (avg_delay / int_delay_buf.size())) / PULSES_PER_REVOLUTION;
 }
 
-/** count
- * Callback function for interrupt pin
- * @param value Pin value
+/*! \fn void Encoder::count( bool value )
+ * \brief Callback function for interrupt pin
+ * @param[in] value Pin value
  */
 void Encoder::count( bool value )
 {

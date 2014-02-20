@@ -54,9 +54,11 @@ THE SOFTWARE.
 #include <linux/i2c-dev.h>
 #include "I2Cdev.h"
 
-/** Default constructor.
+/*! \fn I2Cdev::I2Cdev()
+* \brief Default constructor.
  */
-I2Cdev::I2Cdev() {
+I2Cdev::I2Cdev()
+{
 }
 
 /** Read a single bit from an 8-bit device register.
@@ -221,28 +223,32 @@ int8_t I2Cdev::readWords(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint1
     return count;
 }
 
-/** write a single bit in an 8-bit device register.
+/*! \fn bool I2Cdev::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data)
+ * \brief Write a single bit in an 8-bit device register.
  * @param devAddr I2C slave device address
  * @param regAddr Register regAddr to write to
  * @param bitNum Bit position to write (0-7)
- * @param value New bit value to write
+ * @param data New bit value to write
  * @return Status of operation (true = success)
  */
-bool I2Cdev::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data) {
+bool I2Cdev::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data)
+{
     uint8_t b;
     readByte(devAddr, regAddr, &b);
     b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
     return writeByte(devAddr, regAddr, b);
 }
 
-/** write a single bit in a 16-bit device register.
+/*! \fn bool I2Cdev::writeBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t data)
+ * \brief Write a single bit in a 16-bit device register.
  * @param devAddr I2C slave device address
  * @param regAddr Register regAddr to write to
  * @param bitNum Bit position to write (0-15)
- * @param value New bit value to write
+ * @param data New bit value to write
  * @return Status of operation (true = success)
  */
-bool I2Cdev::writeBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t data) {
+bool I2Cdev::writeBitW(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint16_t data)
+{
     uint16_t w;
     readWord(devAddr, regAddr, &w);
     w = (data != 0) ? (w | (1 << bitNum)) : (w & ~(1 << bitNum));

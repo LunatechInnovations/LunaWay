@@ -853,7 +853,7 @@ uint8_t MPU6050::getMasterClockSpeed() {
     return buffer[0];
 }
 /** Set I2C master clock speed.
- * @reparam speed Current I2C master clock speed
+ * @param speed Current I2C master clock speed
  * @see MPU6050_RA_I2C_MST_CTRL
  */
 void MPU6050::setMasterClockSpeed(uint8_t speed) {
@@ -1398,7 +1398,7 @@ bool MPU6050::getFSyncInterruptLevel() {
     return buffer[0];
 }
 /** Set FSYNC interrupt logic level mode.
- * @param mode New FSYNC interrupt mode (0=active-high, 1=active-low)
+ * @param level New FSYNC interrupt mode (0=active-high, 1=active-low)
  * @see getFSyncInterruptMode()
  * @see MPU6050_RA_INT_PIN_CFG
  * @see MPU6050_INTCFG_FSYNC_INT_LEVEL_BIT
@@ -2499,7 +2499,7 @@ void MPU6050::setClockSource(uint8_t source) {
  * 1            | 2.5 Hz
  * 2            | 5 Hz
  * 3            | 10 Hz
- * <pre>
+ * </pre>
  *
  * For further information regarding the MPU-60X0's power modes, please refer to
  * Register 107.
@@ -2507,7 +2507,8 @@ void MPU6050::setClockSource(uint8_t source) {
  * @return Current wake frequency
  * @see MPU6050_RA_PWR_MGMT_2
  */
-uint8_t MPU6050::getWakeFrequency() {
+uint8_t MPU6050::getWakeFrequency()
+{
     I2Cdev::readBits(devAddr, MPU6050_RA_PWR_MGMT_2, MPU6050_PWR2_LP_WAKE_CTRL_BIT, MPU6050_PWR2_LP_WAKE_CTRL_LENGTH, buffer);
     return buffer[0];
 }
@@ -2530,7 +2531,7 @@ bool MPU6050::getStandbyXAccelEnabled() {
     return buffer[0];
 }
 /** Set X-axis accelerometer standby enabled status.
- * @param New X-axis standby enabled status
+ * @param enabled New X-axis standby enabled status
  * @see getStandbyXAccelEnabled()
  * @see MPU6050_RA_PWR_MGMT_2
  * @see MPU6050_PWR2_STBY_XA_BIT
@@ -2549,7 +2550,7 @@ bool MPU6050::getStandbyYAccelEnabled() {
     return buffer[0];
 }
 /** Set Y-axis accelerometer standby enabled status.
- * @param New Y-axis standby enabled status
+ * @param enabled New Y-axis standby enabled status
  * @see getStandbyYAccelEnabled()
  * @see MPU6050_RA_PWR_MGMT_2
  * @see MPU6050_PWR2_STBY_YA_BIT
@@ -2568,7 +2569,7 @@ bool MPU6050::getStandbyZAccelEnabled() {
     return buffer[0];
 }
 /** Set Z-axis accelerometer standby enabled status.
- * @param New Z-axis standby enabled status
+ * @param enabled New Z-axis standby enabled status
  * @see getStandbyZAccelEnabled()
  * @see MPU6050_RA_PWR_MGMT_2
  * @see MPU6050_PWR2_STBY_ZA_BIT
@@ -2587,7 +2588,7 @@ bool MPU6050::getStandbyXGyroEnabled() {
     return buffer[0];
 }
 /** Set X-axis gyroscope standby enabled status.
- * @param New X-axis standby enabled status
+ * @param enabled New X-axis standby enabled status
  * @see getStandbyXGyroEnabled()
  * @see MPU6050_RA_PWR_MGMT_2
  * @see MPU6050_PWR2_STBY_XG_BIT
@@ -2606,7 +2607,7 @@ bool MPU6050::getStandbyYGyroEnabled() {
     return buffer[0];
 }
 /** Set Y-axis gyroscope standby enabled status.
- * @param New Y-axis standby enabled status
+ * @param enabled New Y-axis standby enabled status
  * @see getStandbyYGyroEnabled()
  * @see MPU6050_RA_PWR_MGMT_2
  * @see MPU6050_PWR2_STBY_YG_BIT
@@ -2625,7 +2626,7 @@ bool MPU6050::getStandbyZGyroEnabled() {
     return buffer[0];
 }
 /** Set Z-axis gyroscope standby enabled status.
- * @param New Z-axis standby enabled status
+ * @param enabled New Z-axis standby enabled status
  * @see getStandbyZGyroEnabled()
  * @see MPU6050_RA_PWR_MGMT_2
  * @see MPU6050_PWR2_STBY_ZG_BIT

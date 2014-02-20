@@ -19,18 +19,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 #include "AbstractCyclicThread.h"
 
-/** AbstractCyclicThread
- *
- * Constructor
+/*! \fn AbstractCyclicThread::AbstractCyclicThread()
+ * \brief Constructor
  */
 AbstractCyclicThread::AbstractCyclicThread() : running( false )
 {
 }
 
-/** ~AbstractCyclicThread
- *
- * Destructor.
- * Stop and join the thread.
+/* \fn AbstractCyclicThread::~AbstractCyclicThread()
+ * \brief Destructor.
+ * \details Stop and join the thread.
  */
 AbstractCyclicThread::~AbstractCyclicThread()
 {

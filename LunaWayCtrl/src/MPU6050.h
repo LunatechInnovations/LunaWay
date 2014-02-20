@@ -402,6 +402,9 @@ extern "C"
 
 // note: DMP code memory blocks defined at end of header file
 
+/*! \class MPU6050
+ * \brief MPU6050 I2C device class
+ */
 class MPU6050 {
     public:
         MPU6050();
