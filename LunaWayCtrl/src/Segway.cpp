@@ -50,7 +50,7 @@ void Segway::update( double output, double steering )
 	double rrps = _rightMotor->getRPS();
 
 	//Differential
-	double dRps = rrps - lrps + steering * 0.2f;
+	double dRps = lrps - rrps + steering * 0.2f;
 	double p_term = dRps * _p;
 
 	if( output > 0.0f && dRps >= 0.0f ) 		//Moving forward, rightMotor slow
@@ -98,11 +98,8 @@ void Segway::update( double output, double steering )
 		}
 	}
 
-
 	_leftMotor->setOutput( cleft );
 	_rightMotor->setOutput( cright );
-
-	std::cout << _leftMotor->getRPS() << std::endl;
 
 	if( tmp == 8 )
 	{

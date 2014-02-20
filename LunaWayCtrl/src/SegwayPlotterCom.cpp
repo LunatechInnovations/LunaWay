@@ -162,5 +162,19 @@ void SegwayPlotterCom::setPID( std::string msg )
 
 			_pid->setSV( value );
 		}
+		else if( i.substr( 0, 5 ) == "imax=" )
+		{
+			conv << i.substr( 5, i.size() -1 );
+			conv >> value;
+
+			_pid->setMaxIState( value );
+		}
+		else if( i.substr( 0, 5 ) == "imin=" )
+		{
+			conv << i.substr( 5, i.size() -1 );
+			conv >> value;
+
+			_pid->setMinIState( value );
+		}
 	}
 }

@@ -17,8 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 */
 
-//#define DEBUG
-#undef DEBUG
+#define DEBUG
+//#undef DEBUG
 
 #include <iostream>
 #include <vector>
@@ -56,7 +56,7 @@ extern "C"
 #define START_I 0.0f					//Start value for i gain in PID regulator
 #define START_D 0.05f					//Start value for d gain in PID regulator
 #define START_IRANGE 30					//Min and max value for i state in PID regulator
-#define START_SV 0.0f					//Start set value
+#define START_SV 1.0f					//Start set value
 #define SAMPLE_TIME 20					//The rate of which to fetch new angle values. Time in Ms
 #define REG_INTERVAL 20 / SAMPLE_TIME	//The interval of witch the regulator calculates new output. Time in n SAMPLE_TIME
 #define START_DIFF_P 3					//Start value for p gain in diff
