@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #define ANGLES_H_
 #include "MPU6050.h"
 #include <chrono>
+#include <vector>
 
 /*! \class Angles
  * \brief Convert raw MPU6050 sensor data to angles and rates
@@ -41,6 +42,7 @@ class Angles
 		double roll;
 		std::chrono::high_resolution_clock::time_point prev_calculate;
 		double pitch_gyro_rate;
+		std::vector<double> pitch_gyro_rate_buffer;
 };
 
 #endif /* ANGLES_H_ */

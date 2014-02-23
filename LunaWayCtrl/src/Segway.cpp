@@ -49,7 +49,7 @@ void Segway::update( double output, double steering )
 	double lrps = _leftMotor->getRPS();
 	double rrps = _rightMotor->getRPS();
 
-	//Differential
+//	Differential
 	double dRps = lrps - rrps + steering * 0.2f;
 	double p_term = dRps * _p;
 

@@ -57,7 +57,7 @@ extern "C"
 #define START_D 0.05f					//Start value for d gain in PID regulator
 #define START_IRANGE 30					//Min and max value for i state in PID regulator
 #define START_SV 1.0f					//Start set value
-#define SAMPLE_TIME 20					//The rate of which to fetch new angle values. Time in Ms
+#define SAMPLE_TIME 10					//The rate of which to fetch new angle values. Time in Ms
 #define REG_INTERVAL 20 / SAMPLE_TIME	//The interval of witch the regulator calculates new output. Time in n SAMPLE_TIME
 #define START_DIFF_P 3					//Start value for p gain in diff
 
@@ -127,12 +127,14 @@ int main()
 		inpEnable->setupInput();
 
 		//Setup motors (Pins will become outputs inside Motor object)
-		Motor leftMotor( gpio->getPin( LEFT_MOTOR_PWM_PIN ),
-						 gpio->getPin( LEFT_MOTOR_DIR_PIN ),
+		Motor leftMotor( gpio->getPin( LEFT_MOTOR_DIR_PIN ),
+						 gpio->getPin( LEFT_MOTOR_PWM_PIN ),
 						 gpio->getPin( INTERRUPT_LEFT_ENCODER ),
 						 MOTOR_PWM_FREQUENCY );
-		Motor rightMotor( gpio->getPin( RIGHT_MOTOR_PWM_PIN ),
-						  gpio->getPin( RIGHT_MOTOR_DIR_PIN ),
+
+
+		Motor rightMotor( gpio->getPin( RIGHT_MOTOR_DIR_PIN ),
+						  gpio->getPin( RIGHT_MOTOR_PWM_PIN ),
 						  gpio->getPin( INTERRUPT_RIGHT_ENCODER ),
 						  MOTOR_PWM_FREQUENCY );
 
@@ -172,7 +174,7 @@ int main()
 				angles.calculate();	//Fetch angle samples
 				if( reg_interval >= REG_INTERVAL )
 				{
-					pid.setSV( START_SV - (xcs.getVertical() * 0.05f) );
+					pid.setSV( START_SV - (xcs.getVertical() * 0.02f) );
 					segway.update( pid.regulate( angles.getPitch(), angles.getPitchGyroRate() ),
 								   xcs.getHorizontal() );
 					reg_interval = 1;
@@ -188,7 +190,7 @@ int main()
 			if( plot_interval >= PLOT_INTERVAL )
 			{
 				stringstream sockdata;
-				sockdata << angles.getPitch() << ";" << segway.getLeftMotorOutput() << ";" << endl;
+				sockdata << angles.getPitch() * 10.0f << ";" << segway.getLeftMotorOutput() << ";" << endl;
 				spc.sendData( sockdata.str() );
 
 				plot_interval = 1;

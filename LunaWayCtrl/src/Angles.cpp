@@ -69,6 +69,15 @@ void Angles::calculate()
 	acc_roll = (acc_roll * (180.0f / M_PI ) );
 
 	pitch_gyro_rate = ((double)gyroY / (32768.0f))*250.0f;
+//	pitch_gyro_rate_buffer.push_back( ((double)gyroY / (32768.0f))*250.0f );
+//	if( pitch_gyro_rate_buffer.size() >= 3 )
+//		pitch_gyro_rate_buffer.erase( pitch_gyro_rate_buffer.begin() );
+//
+//	pitch_gyro_rate = 0.0f;
+//	for( auto i : pitch_gyro_rate_buffer )
+//		pitch_gyro_rate += i;
+//	pitch_gyro_rate /= pitch_gyro_rate_buffer.size();
+
 //	double gyro_roll_rate = ((double)gyroZ / (32768.0f))*250.0f;
 
 	pitch = fc * (pitch + (pitch_gyro_rate * (dT.count() / 1000.0f)))+ ((1.0f - fc) * acc_pitch);
